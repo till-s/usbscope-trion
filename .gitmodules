@@ -1,0 +1,3 @@
+[submodule "modules/mecatica-usb"]
+	path = modules/mecatica-usb
+	url = git@github.com:till-s/mecatica-usb
