@@ -4,3 +4,6 @@
 [submodule "modules/usbadc-support"]
 	path = modules/usbadc-support
 	url = git@github.com:till-s/usbadc-support
+[submodule "modules/SDRAMCtrl"]
+	path = modules/SDRAMCtrl
+	url = git@github.com:till-s/SDRAM-controller.git
