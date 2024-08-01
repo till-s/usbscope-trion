@@ -79,6 +79,18 @@ architecture rtl of scope_test_top is
    attribute ASYNC_REG         : string;
    attribute SYN_PRESERVE      : boolean;
 
+   component CosGen is
+      port (
+         clk      : in  std_logic;
+         load     : in  std_logic;
+         coeff    : in  signed(17 downto 0);
+         aini     : in  signed(34 downto 0);
+         phasCos  : in  boolean;
+         cos      : out signed(34 downto 0)
+      );
+   end component CosGen;
+
+
    function toSlv(constant a : in Slv8Array)
    return std_logic_vector is
       variable v : std_logic_vector(8*a'length - 1 downto 0);
@@ -105,6 +117,7 @@ architecture rtl of scope_test_top is
    signal acmFifoOutDat        : Usb2ByteType;
    signal acmFifoOutEmpty      : std_logic;
    signal acmFifoOutRen        : std_logic    := '1';
+   signal acmFifoOutVld        : std_logic;
    signal acmFifoInpDat        : Usb2ByteType := (others => '0');
    signal acmFifoInpFull       : std_logic;
    signal acmFifoInpWen        : std_logic    := '0';
@@ -244,9 +257,21 @@ begin
       usb2Rst      <= rst(0);
    end process P_INI;
 
-   fifoRDat      <= acmFifoOutDat;
-   fifoRVld      <= not acmFifoOutEmpty;
-   acmFifoOutRen <= fifoRRdy;
+   acmFifoOutVld <= not acmFifoOutEmpty;
+
+   U_BUF : entity work.Usb2StrmBuf
+      port map (
+         clk   => ulpiClk,
+         rst   => acmFifoRst,
+
+         vldIb => acmFifoOutVld,
+         rdyIb => acmFifoOutRen,
+         datIb => acmFifoOutDat,
+
+         vldOb => fifoRVld,
+         rdyOb => fifoRRdy,
+         datOb => fifoRDat
+      );
 
    acmFifoInpDat <= fifoWDat;
    acmFifoInpWen <= fifoWVld;
@@ -486,7 +511,7 @@ begin
 --         sin      => adcSin
 --      );
 
-      U_COS : entity work.CosGen
+      U_COS : CosGen
          port map (
             clk      => adcClk,
             load     => load,
@@ -496,7 +521,7 @@ begin
             cos      => adcCos
          );
 
-      U_SIN : entity work.CosGen
+      U_SIN : CosGen
          port map (
             clk      => adcClk,
             load     => load,
