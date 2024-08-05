@@ -12,6 +12,8 @@ use     work.Usb2EpGenericCtlPkg.all;
 use     work.Usb2AppCfgPkg.all;
 use     work.CommandMuxPkg.all;
 use     work.BasicPkg.Slv8Array;
+use     work.BasicPkg.NaturalArray;
+use     work.AcqCtlPkg.all;
 use     work.SDRAMPkg.all;
 
 entity scope_test_top is
@@ -23,18 +25,20 @@ entity scope_test_top is
       --   on the fine-tuning of the sdram_smpl_clk phase...
       SDRAM_READ_DLY_G  : natural := 3;
       GIT_VERSION_G     : std_logic_vector(31 downto 0) := x"0000_0000";
+      BOARD_VERSION_G   : std_logic_vector( 7 downto 0) := x"02";
       USE_SDRAM_BUF_G   : boolean := true;
       ADC_FREQ_G        : real    := 130.0E6;
-      USE_SIN_GEN_G     : boolean := false;
       NO_DECIMATORS_G   : boolean := false;
       HAVE_SPI_CMD_G    : boolean := true;
-      ADC_BITS_G        : natural := 10
+      ADC_BITS_G        : natural := 10;
+      USE_STRM_BUF_G    : boolean := true
    );
    port (
       sdram_clk         : in  std_logic;
       sdram_smpl_clk    : in  std_logic;
-      -- create 180-deg out of phase clock with DDIO
+      -- create output clock
       sdram_clkout_HI   : out std_logic := '1';
+      sdram_clkout_LO   : out std_logic := '0';
 
       sdram_CSb         : out std_logic;
       sdram_CKE         : out std_logic;
@@ -60,18 +64,40 @@ entity scope_test_top is
       ulpiStp_OUT       : out   std_logic                    := '0';
       ulpiStp_OE        : out   std_logic                    := '0';
       ulpiPllLocked     : in    std_logic;
-      sdramPllLocked    : in    std_logic;
 
-      adcClk            : in    std_logic;
-      ADC_DDR_HI        : in    std_logic_vector(ADC_BITS_G downto 0);
-      ADC_DDR_LO        : in    std_logic_vector(ADC_BITS_G downto 0);
+      led               : out   std_logic_vector(12 downto 0) := (others => '0');
+
+      i2cSDA_IN         : in    std_logic;
+      i2cSDA_OUT        : out   std_logic := '0';
+      i2cSDA_OE         : out   std_logic := '0';
+      i2cSCL_IN         : in    std_logic;
+      i2cSCL_OUT        : out   std_logic := '0';
+      i2cSCL_OE         : out   std_logic := '0';
+
+      gpioDat_IN        : in    std_logic;
+      gpioDat_OUT       : out   std_logic := '0';
+      gpioDat_OE        : out   std_logic := '0';
+      gpioDir           : out   std_logic := '0';
+
+      adcSClk           : out   std_logic := '0';
+      adcSDIO_IN        : in    std_logic;
+      adcSDIO_OUT       : out   std_logic := '0';
+      adcSDIO_OE        : out   std_logic := '0';
+      adcCSb            : out   std_logic := '1';
+
+      pgaSClk           : out   std_logic := '0';
+      pgaSDat           : out   std_logic := '0';
+      pgaCSb            : out   std_logic_vector(1 downto 0) := (others => '1');
 
       spiSClk           : out   std_logic;
       spiMOSI           : out   std_logic;
       spiMISO           : in    std_logic;
-      spiCSb_OUT        : out   std_logic;
-      spiCSb_OE         : out   std_logic := '1';
-      spiCSb_IN         : in    std_logic
+      spiCSb            : out   std_logic;
+
+      adcClk            : in    std_logic;
+      adcPllLocked      : in    std_logic;
+      ADC_DDR_HI        : in    std_logic_vector(ADC_BITS_G downto 0);
+      ADC_DDR_LO        : in    std_logic_vector(ADC_BITS_G downto 0)
    );
 end entity scope_test_top;
 
@@ -110,9 +136,35 @@ architecture rtl of scope_test_top is
    constant FLAT_A_WIDTH_C     : natural := SDRAM_A_WIDTH_C + SDRAM_B_WIDTH_C + SDRAM_C_WIDTH_C;
    constant NSMPL_MAX_C        : natural := (2**FLAT_A_WIDTH_C * 4)/5;
 
-   constant NUM_REGS_C         : natural := 20;
+   constant ULPI_CLK_FREQ_C    : real    := 60.0E6;
+   constant ACM_CLK_FREQ_C     : real    := ULPI_CLK_FREQ_C;
 
    constant MEM_DEPTH_C        : natural := ite( USE_SDRAM_BUF_G, 3354624, 2048 );
+
+   function BB_DELAY_ARRAY_F   return NaturalArray is
+      variable v : NaturalArray( 0 to 2**SubCommandBBType'length - 1 ) := (others => 1);
+   begin
+      v( to_integer( unsigned( CMD_BB_NONE_C    ) ) ) := 0;
+      -- 10k pulldowns make the PGA level shifters really slow; measured time
+      -- constant for HI-LO transition (at shifter output) ~330ns!
+      v( to_integer( unsigned( CMD_BB_SPI_PGA_C ) ) ) := 200;
+      return v;
+   end function BB_DELAY_ARRAY_F;
+
+   constant BB_DELAY_ARRAY_C   : NaturalArray := BB_DELAY_ARRAY_F;
+
+   constant BB_SPI_CSb_C       : natural := 0;
+   constant BB_SPI_SCK_C       : natural := 1;
+   constant BB_SPI_MSO_C       : natural := 2;
+   constant BB_SPI_MSI_C       : natural := 3;
+
+   constant BB_I2C_SDA_C       : natural := 4;
+   constant BB_I2C_SCL_C       : natural := 5;
+
+   constant BB_SPI_T_C         : natural := 6;
+   constant BB_XXX_XXX_C       : natural := 7;
+
+   constant BB_INIT_C          : std_logic_vector(7 downto 0) := x"F1";
 
    signal acmFifoOutDat        : Usb2ByteType;
    signal acmFifoOutEmpty      : std_logic;
@@ -168,6 +220,7 @@ architecture rtl of scope_test_top is
    signal adcDatAReg           : std_logic_vector(ADC_BITS_G downto 0) := (others => '0');
    signal adcDatBReg           : std_logic_vector(ADC_BITS_G downto 0) := (others => '0');
    signal adcCnt               : signed(ADC_BITS_G - 1 downto 0)       := (others => '0');
+   signal adcStatus            : std_logic_vector(7 downto 0);
 
    signal regRDat              : std_logic_vector(7 downto 0) := (others => '0');
    signal regWDat              : std_logic_vector(7 downto 0);
@@ -176,22 +229,33 @@ architecture rtl of scope_test_top is
    signal regVld               : std_logic;
    signal regRdy               : std_logic := '1';
    signal regErr               : std_logic := '1';
-   signal regWen               : std_logic;
-   signal genLoad              : std_logic := '0';
-   signal load                 : std_logic := '0';
 
-   subtype RegIdxType          is integer range 0 to NUM_REGS_C - 1;
+   type RegType is record
+      led         : std_logic_vector(led'range);
+      isTriggered : std_logic;
+   end record RegType;
 
-   signal regs                 : Slv8Array(RegIdxType) := ( 18 => x"01", others => (others => '0') );
-   signal regIdx               : RegIdxType;
+   constant REG_INIT_C : RegType := (
+      led         => (others => '0'),
+      isTriggered => '0'
+   );
 
-   signal adcCos               : signed(34 downto 0);
-   signal adcSin               : signed(34 downto 0);
-   signal adcASini             : signed(34 downto 0) := to_signed(112233, 35);
-   signal adcACini             : signed(34 downto 0) := to_signed(11223344, 35);
-   signal adcCoeff             : signed(17 downto 0);
-   signal adcCini              : signed(17 downto 0);
-   signal adcAini              : signed( 7 downto 0);
+   signal regs                 : RegType   := REG_INIT_C;
+   signal regsIn               : RegType;
+   signal isTriggeredLoc       : std_logic := '0';
+
+   signal spiSClkCtl           : std_logic;
+   signal spiMOSICtl           : std_logic;
+   signal spiCSbCtl            : std_logic;
+
+   signal extTrg               : std_logic := '0';
+
+   signal pgaCSbLocIb          : std_logic;
+   signal pgaCSbLocOb          : std_logic_vector(pgaCSb'range) := (others => '1');
+   signal pgaMOSILoc           : std_logic;
+   signal pgaMISOLoc           : std_logic;
+   signal pgaSClkLocIb         : std_logic;
+   signal pgaSClkLocOb         : std_logic_vector(pgaCSb'range);
 
 begin
 
@@ -259,6 +323,8 @@ begin
 
    acmFifoOutVld <= not acmFifoOutEmpty;
 
+   G_STRM_BUF : if ( USE_STRM_BUF_G ) generate
+
    U_BUF : entity work.Usb2StrmBuf
       port map (
          clk   => ulpiClk,
@@ -273,18 +339,30 @@ begin
          datOb => fifoRDat
       );
 
+   end generate G_STRM_BUF;
+
+   G_NO_STRM_BUF : if ( not USE_STRM_BUF_G ) generate
+      fifoRVld      <= acmFifoOutVld;
+      fifoRDat      <= acmFifoOutDat;
+      acmFifoOutRen <= fifoRRdy;
+   end generate G_NO_STRM_BUF;
+
    acmFifoInpDat <= fifoWDat;
    acmFifoInpWen <= fifoWVld;
    fifoWRdy      <= not acmFifoInpFull;
 
    U_CMD : entity work.CommandWrapper
    generic map (
-      GIT_VERSION_G                => GIT_VERSION_G,
+      I2C_SCL_G                    => BB_I2C_SCL_C,
+      BBO_INIT_G                   => BB_INIT_C,
       FIFO_FREQ_G                  => 60.0E6,
       ADC_FREQ_G                   => ADC_FREQ_G,
       ADC_BITS_G                   => ADC_BITS_G,
       RAM_BITS_G                   => ADC_BITS_G,
       MEM_DEPTH_G                  => MEM_DEPTH_C,
+      GIT_VERSION_G                => GIT_VERSION_G,
+      BOARD_VERSION_G              => BOARD_VERSION_G,
+      BB_DELAY_ARRAY_G             => BB_DELAY_ARRAY_C,
       SDRAM_ADDR_WIDTH_G           => FLAT_A_WIDTH_C,
       USE_SDRAM_BUF_G              => USE_SDRAM_BUF_G,
       HAVE_SPI_CMD_G               => HAVE_SPI_CMD_G,
@@ -308,12 +386,12 @@ begin
       bbi                          => bbi, --: in  std_logic_vector(7 downto 0) := (others => '0');
       subCmdBB                     => subCmdBB, --: out SubCommandBBType;
 
-      adcStatus                    => open, --: out std_logic_vector(7 downto 0) := (others => '0');
+      adcStatus                    => adcStatus, --: out std_logic_vector(7 downto 0) := (others => '0');
       err(0)                       => open,
       err(1)                       => open,
 
       -- register interface
-      regClk                       => adcClk,
+      regClk                       => ulpiClk,
       regRDat                      => regRDat, --: in  std_logic_vector(7 downto 0) := (others => '0');
       regWDat                      => regWDat, --: out std_logic_vector(7 downto 0);
       regAddr                      => regAddr, --: out unsigned(7 downto 0);
@@ -322,9 +400,9 @@ begin
       regRdy                       => regRdy,  --: in  std_logic := '1';
       regErr                       => regErr,  --: in  std_logic := '1'
 
-      spiSClk                      => spiSClk, --: out std_logic;
-      spiMOSI                      => spiMOSI, --: out std_logic;
-      spiCSb                       => spiCSb_OUT,  --: out std_logic;
+      spiSClk                      => spiSClkCtl, --: out std_logic;
+      spiMOSI                      => spiMOSICtl, --: out std_logic;
+      spiCSb                       => spiCSbCtl,  --: out std_logic;
       spiMISO                      => spiMISO, --: in  std_logic := '0';
 
       adcClk                       => adcClk,
@@ -334,7 +412,7 @@ begin
       adcDataA                     => adcDatAReg,
       adcDataB                     => adcDatBReg,
 
-      extTrg                       => open, --: in  std_logic := '0';
+      extTrg                       => extTrg,
 
       -- SDRAM interface
       sdramClk                     => sdram_clk,
@@ -442,6 +520,67 @@ begin
 
    ulpiIb.nxt    <= ulpiNxt;
 
+   B_IO : block is
+   begin
+
+      extTrg        <= gpioDat_IN;
+
+      i2cSDA_OUT    <= bbo(BB_I2C_SDA_C);
+      i2cSDA_OE     <= not bbo(BB_I2C_SDA_C);
+      bbi(BB_I2C_SDA_C) <= i2cSDA_IN;
+
+      i2cSCL_OUT    <= bbo(BB_I2C_SCL_C);
+      i2cSCL_OE     <= not bbo(BB_I2C_SCL_C);
+      bbi(BB_I2C_SCL_C) <= i2cSCL_IN;
+
+      -- write to device only if T is deasserted
+      pgaCSb(0)         <= not pgaCSBLocOb(0);  -- drivers invert
+      pgaCSb(1)         <= not pgaCSBLocOb(1);  -- drivers invert
+      -- the pgaSClkLocOb signals are gated; the muxed chip-selects (pgaCSBLocOb)
+      -- are asserted early (while a preceding SCLK on the input of the shadow registers may
+      -- still be active).
+      -- Since we have only a single physical line we or the two gated clocks together.
+      -- We MUST NOT use the pgaSClkIb (ungated).
+      pgaSClk           <= not (pgaSClkLocOb(0) or pgaSClkLocOb(1)); -- drivers invert
+      pgaSDat           <= not pgaMOSILoc; -- drivers invert
+
+      P_CS_MUX : process ( bbo, subCmdBB, adcSDIO_IN, spiMISO, pgaMISOLoc, spiSClkCtl, spiMOSICtl, spiCSbCtl ) is
+         variable spiCSbLoc : std_logic;
+      begin
+         adcCSb         <= '1';
+         spiCSbLoc      := spiCSbCtl;
+         pgaCSbLocIb    <= '1';
+         adcSDIO_OE     <= '0';
+         adcSDIO_OUT    <= '1';
+
+         pgaSClkLocIb   <= bbo(BB_SPI_SCK_C);
+         adcSClk        <= bbo(BB_SPI_SCK_C);
+         spiSClk        <= bbo(BB_SPI_SCK_C) or spiSClkCtl;
+
+         pgaMOSILoc     <= bbo(BB_SPI_MSO_C);
+         spiMOSI        <= bbo(BB_SPI_MSO_C) or spiMOSICtl;
+
+         bbi(BB_SPI_MSI_C)               <= '0';
+
+         if    ( subCmdBB = CMD_BB_SPI_ADC_C ) then
+            adcCSb      <= bbo(BB_SPI_CSb_C);
+            if ( bbo(BB_SPI_T_C) = '0' ) then
+               adcSDIO_OUT  <= bbo(BB_SPI_MSO_C);
+               adcSDIO_OE   <= '1';
+            end if;
+            bbi(BB_SPI_MSI_C) <= adcSDIO_IN;
+         elsif ( subCmdBB = CMD_BB_SPI_PGA_C ) then
+            pgaCSbLocIb       <= bbo(BB_SPI_CSb_C);
+            bbi(BB_SPI_MSI_C) <= pgaMISOLoc;
+         elsif ( subCmdBB = CMD_BB_SPI_ROM_C ) then
+            spiCSbLoc         := bbo(BB_SPI_CSb_C) and spiCSbCtl;
+            bbi(BB_SPI_MSI_C) <= spiMISO;
+         end if;
+         spiCSb <= spiCSbLoc;
+      end process P_CS_MUX;
+
+   end block B_IO;
+
    P_SIM : process ( adcClk ) is
    begin
       if ( rising_edge( adcClk ) ) then
@@ -455,13 +594,8 @@ begin
       end if;
    end process P_SIM;
 
-   G_ADC_CNT : if ( not USE_SIN_GEN_G ) generate
-
    adcDatA <= ADC_DDR_HI;
    adcDatB <= ADC_DDR_LO;
-
-   end generate G_ADC_CNT;
-
 
    process ( ulpiClk ) is
       variable cnt : unsigned(25 downto 0) := (others => '0');
@@ -470,83 +604,111 @@ begin
          cnt := cnt + 1;
       end if;
    end process;
-   
-   process ( regAddr, regIdx ) is
+
+   B_REGS : block is
    begin
-      regErr  <= '1';
-      regRdy  <= '1';
-      regIdx  <= 0;
-      if ( regAddr < regs'length ) then
-         regErr  <= '0';
-         regIdx  <= to_integer( regAddr );
-      end if;
-      regRDat <= regs( regIdx );
-   end process;
-
-   regWen <= (regVld and not regErr and not regRdnw);
-
-   process ( adcClk ) is
-   begin
-      if ( rising_edge( adcClk ) ) then
-         genLoad <= regWen;
-         if (  regWen = '1' ) then
-            regs( regIdx ) <= regWDat;
-         end if;
-      end if;
-   end process;
-
-   G_ADC_SIN : if ( USE_SIN_GEN_G ) generate
-
---   U_SIN_COS : entity work.SinCosGen
---      generic map (
---         MULTIPLIER_G => "EFX"
---      )
---      port map (
---         clk      => adcClk,
---         load     => load,
---         coeff    => adcCoeff,
---         cini     => adcCini,
---         aini     => adcAini,
---         cos      => adcCos,
---         sin      => adcSin
---      );
-
-      U_COS : CosGen
-         port map (
-            clk      => adcClk,
-            load     => load,
-            coeff    => adcCoeff,
-            aini     => adcACini,
-            phasCos  => true,
-            cos      => adcCos
-         );
-
-      U_SIN : CosGen
-         port map (
-            clk      => adcClk,
-            load     => load,
-            coeff    => adcCoeff,
-            aini     => adcASini,
-            phasCos  => false,
-            cos      => adcSin
-         );
-
-      P_REG_PARMS : process ( adcClk ) is
+      P_COMB : process (regs, regVld, regRdnw, regAddr, regWDat) is
+         variable v : RegType;
       begin
-         if ( rising_edge( adcClk ) ) then
-            load     <= genLoad;
-            adcCoeff <= resize( signed( toSlv( regs( 0 to  2) ) ), adcCoeff'length );
-            adcCini  <= resize( signed( toSlv( regs( 3 to  5) ) ), adcCini'length  );
-            adcACini <= resize( signed( toSlv( regs( 6 to 11) ) ), adcACini'length );
-            adcASini <= resize( signed( toSlv( regs(12 to 17) ) ), adcASini'length );
-            adcAini  <= signed( regs(6) );
+         v              := regs;
+         regRdy         <= '1';
+         regErr         <= '0';
+         regRDat        <= (others => '0');
+         isTriggeredLoc <= regs.isTriggered;
+         if     ( regAddr = 0 ) then
+            -- front LEDs
+            regRDat <= '0' & regs.led(5 downto 3) & '0' & regs.led(8 downto 6);
+            if ( (regVld and not regRdnw) = '1' ) then
+               v.led(5 downto 3) := regWDat(6 downto 4);
+               v.led(8 downto 6) := regWDat(2 downto 0);
+            end if;
+         elsif  ( regAddr = 1 ) then
+            -- rear  LEDs
+            regRDat <= regs.led(12 downto 9) & '0' & regs.led(2 downto 0);
+            if ( (regVld and not regRdnw) = '1' ) then
+               v.led(12 downto 9) := regWDat(7 downto 4);
+               v.led( 2 downto 0) := regWDat(2 downto 0);
+            end if;
+         elsif  ( regAddr = 2 ) then
+            regRDat(0) <= regs.isTriggered;
+            if ( (regVld and not regRdnw) = '1' ) then
+               v.isTriggered      := regWDat(0);
+               -- writing a one when bit is already active causes a flicker
+               if ( ( v.isTriggered and regs.isTriggered ) = '1' ) then
+                  isTriggeredLoc <= '0';
+               end if;
+            end if;
+         else
+            regErr <= '1';
          end if;
-      end process P_REG_PARMS;
 
-      adcDatA <= std_logic_vector( adcCos(adcCos'left downto adcCos'left - ADC_BITS_G + 1 ) ) & '0';
-      adcDatB <= std_logic_vector( adcSin(adcSin'left downto adcSin'left - ADC_BITS_G + 1 ) ) & '0';
-   end generate G_ADC_SIN;
+         regsIn  <= v;
+      end process P_COMB;
 
-   bbi           <= bbo;
+      P_SEQ : process ( ulpiClk ) is
+      begin
+         if ( rising_edge( ulpiClk ) ) then
+            if ( acmFifoRst = '1' ) then
+               regs <= REG_INIT_C;
+            else
+               regs <= regsIn;
+            end if;
+         end if;
+      end process P_SEQ;
+   end block B_REGS;
+   
+   B_LEDS : block is
+      signal isTriggeredAny, isTriggeredA, isTriggeredB, isTriggeredE : std_logic;
+   begin
+
+      U_FLICKER : entity work.Flicker
+         generic map (
+            CLOCK_FREQ_G => ACM_CLK_FREQ_C
+         )
+         port map (
+            clk          => ulpiClk,
+            rst          => acmFifoRst,
+            datInp       => isTriggeredLoc,
+            datOut       => isTriggeredAny
+         );
+
+      isTriggeredA   <= isTriggeredAny and adcStatus(ACQ_STA_SRC_A_C);
+      isTriggeredB   <= isTriggeredAny and adcStatus(ACQ_STA_SRC_B_C);
+      isTriggeredE   <= isTriggeredAny and not adcStatus(ACQ_STA_SRC_A_C) and not adcStatus(ACQ_STA_SRC_B_C);
+
+      P_MAP_LED : process (
+         ulpiPllLocked,
+         adcPllLocked,
+         adcStatus,
+         isTriggeredA,
+         isTriggeredB,
+         isTriggeredE,
+         regs
+      ) is
+         variable v : std_logic_vector(led'range);
+      begin
+         v     := (others => '0');
+         v( 0) := '0';                          -- front-right, Red
+         v( 1) := isTriggeredE;                 -- front-right, Green
+         v( 2) := '0';                          -- front-right, Blue
+
+         v( 3) := adcStatus(ACQ_STA_OVR_A_C);   -- CHA,         Red
+         v( 4) := isTriggeredA;                 -- CHA,         Green
+         v( 5) := '0';                          -- CHA,         Blue
+
+         v( 6) := adcStatus(ACQ_STA_OVR_B_C);   -- CHB,         Red
+         v( 7) := isTriggeredB;                 -- CHB,         Green
+         v( 8) := '0';                          -- CHB,         Blue
+
+         v( 9) := '0';                          -- front-left,  Red
+         v(10) := ulpiPllLocked and adcPllLocked; -- front-left,  Green
+         v(11) := '0';                          -- front-left,  Blue
+
+         v(12) := '0';                          -- front-left, single
+
+         led   <= v or regs.led;
+      end process P_MAP_LED;
+
+   end block B_LEDS;
 
 end architecture rtl;
