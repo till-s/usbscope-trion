@@ -1,9 +1,9 @@
 [submodule "modules/mecatica-usb"]
 	path = modules/mecatica-usb
-	url = git@github.com:till-s/mecatica-usb
+	url = ../mecatica-usb
 [submodule "modules/usbadc-support"]
 	path = modules/usbadc-support
-	url = git@github.com:till-s/usbadc-support
+	url = ../usbadc-support
 [submodule "modules/SDRAMCtrl"]
 	path = modules/SDRAMCtrl
-	url = git@github.com:till-s/SDRAM-controller.git
+	url = ../SDRAM-controller.git
