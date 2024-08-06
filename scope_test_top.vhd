@@ -24,7 +24,7 @@ entity scope_test_top is
       --   sampling and resync to sdram_clk; the precise value also depends
       --   on the fine-tuning of the sdram_smpl_clk phase...
       SDRAM_READ_DLY_G  : natural := 3;
-      GIT_VERSION_G     : std_logic_vector(31 downto 0) := x"0000_0000";
+      GIT_VERSION_G     : std_logic_vector(31 downto 0) := x"dead_beef";
       BOARD_VERSION_G   : std_logic_vector( 7 downto 0) := x"02";
       USE_SDRAM_BUF_G   : boolean := true;
       ADC_FREQ_G        : real    := 130.0E6;
