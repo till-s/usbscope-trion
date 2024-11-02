@@ -94,10 +94,15 @@ entity scope_test_top is
       spiMISO           : in    std_logic;
       spiCSb            : out   std_logic;
 
+      extIO             : in    std_logic_vector(1 downto 0);
+
       adcClk            : in    std_logic;
       adcPllLocked      : in    std_logic;
       ADC_DDR_HI        : in    std_logic_vector(ADC_BITS_G downto 0);
-      ADC_DDR_LO        : in    std_logic_vector(ADC_BITS_G downto 0)
+      ADC_DDR_LO        : in    std_logic_vector(ADC_BITS_G downto 0);
+
+      -- aux/fallback clock
+      fpgaClk           : in    std_logic
    );
 end entity scope_test_top;
 

@@ -14,7 +14,7 @@ set_clock_groups -asynchronous -group [get_clocks adcClk] -group [get_clocks ulp
 #  min input  delay  = 0.0 + 1.5 + trion delay
 #  max input  delay  = 0.1 + 6.0 + trion delay
 #  min output delay  = 0.0 + 0.0 + trion delay
-#  max input  delay  = 0.3 + 5.0 + trion delay
+#  max output delay  = 0.3 + 5.0 + trion delay
 # generated ULPI IO constraints:
 set_clock_latency -source -setup -2.314 [get_ports {ulpiClk}]
 set_clock_latency -source -hold  -1.157 [get_ports {ulpiClk}]
@@ -52,26 +52,26 @@ set_input_delay -clock [get_clocks ulpiClk] -max  7.896 [get_ports {ulpiDat_IN[6
 set_input_delay -clock [get_clocks ulpiClk] -min  2.398 [get_ports {ulpiDat_IN[6]}]
 set_output_delay -clock [get_clocks ulpiClk] -max 9.211 [get_ports {ulpiDat_OUT[6]}]
 set_output_delay -clock [get_clocks ulpiClk] -min  1.956 [get_ports {ulpiDat_OUT[6]}]
-set_input_delay -clock [get_clocks ulpiClk] -max  7.896 [get_ports {ulpiDat_IN[7]}]
-set_input_delay -clock [get_clocks ulpiClk] -min  2.398 [get_ports {ulpiDat_IN[7]}]
-set_output_delay -clock [get_clocks ulpiClk] -max 9.211 [get_ports {ulpiDat_OUT[7]}]
-set_output_delay -clock [get_clocks ulpiClk] -min  1.956 [get_ports {ulpiDat_OUT[7]}]
+set_input_delay -clock [get_clocks ulpiClk] -max  7.796 [get_ports {ulpiDat_IN[7]}]
+set_input_delay -clock [get_clocks ulpiClk] -min  2.348 [get_ports {ulpiDat_IN[7]}]
+set_output_delay -clock [get_clocks ulpiClk] -max 9.111 [get_ports {ulpiDat_OUT[7]}]
+set_output_delay -clock [get_clocks ulpiClk] -min  1.905 [get_ports {ulpiDat_OUT[7]}]
 set_input_delay -clock [get_clocks ulpiClk] -max  7.896 [get_ports {ulpiStp_IN}]
 set_input_delay -clock [get_clocks ulpiClk] -min  2.398 [get_ports {ulpiStp_IN}]
 set_output_delay -clock [get_clocks ulpiClk] -max 9.211 [get_ports {ulpiStp_OUT}]
 set_output_delay -clock [get_clocks ulpiClk] -min  1.956 [get_ports {ulpiStp_OUT}]
 
 
-set_false_path -through [get_pins -regexp {.*syncReg[[]0][~]FF[|]D}]
-set_false_path -from [get_clocks adcClk] -through [get_nets -regexp {.*rWrCC.*}]
-set_false_path -from [get_clocks adcClk] -through [get_nets -regexp {.*waddrCC.*}]
-set_false_path -from [get_clocks adcClk] -through [get_nets -regexp {.*nsmplCC.*}]
-set_multicycle_path -setup -end -from [get_clocks ulpiClk] -to [get_clocks adcClk] -through [get_nets -regexp {.*[/]acqParms[.].*}] 3
+#set_false_path -through [get_pins -regexp {.*syncReg[[]0][~]FF[|]D}]
+#set_false_path -from [get_clocks adcClk] -through [get_nets -regexp {.*rWrCC.*}]
+#set_false_path -from [get_clocks adcClk] -through [get_nets -regexp {.*waddrCC.*}]
+#set_false_path -from [get_clocks adcClk] -through [get_nets -regexp {.*nsmplCC.*}]
+#set_multicycle_path -setup -end -from [get_clocks ulpiClk] -to [get_clocks adcClk] -through [get_nets -regexp {.*[/]acqParms[.].*}] 3
 # Relax hold timing
-set_false_path -hold  -from [get_clocks ulpiClk] -to [get_clocks adcClk] -through [get_nets -regexp {.*[/]acqParms[.].*}]
+#set_false_path -hold  -from [get_clocks ulpiClk] -to [get_clocks adcClk] -through [get_nets -regexp {.*[/]acqParms[.].*}]
 
-set_multicycle_path -setup -end -from [get_clocks ulpiClk] -to [get_clocks adcClk] -through [get_pins -regexp {.*B2R[/]busCC.*[|]Q}] 2
-set_false_path -hold  -from [get_clocks ulpiClk] -to [get_clocks adcClk] -through [get_pins -regexp {.*B2R[/]busCC.*[|]Q}]
+#set_multicycle_path -setup -end -from [get_clocks ulpiClk] -to [get_clocks adcClk] -through [get_pins -regexp {.*B2R[/]busCC.*[|]Q}] 2
+#set_false_path -hold  -from [get_clocks ulpiClk] -to [get_clocks adcClk] -through [get_pins -regexp {.*B2R[/]busCC.*[|]Q}]
 
-set_multicycle_path -setup -end -from [get_clocks adcClk] -to [get_clocks ulpiClk] -through [get_pins -regexp {.*R2B[/]busCC.*[|]Q}] 2
-set_false_path -hold  -from [get_clocks adcClk] -to [get_clocks ulpiClk] -through [get_pins -regexp {.*R2B[/]busCC.*[|]Q}]
+#set_multicycle_path -setup -end -from [get_clocks adcClk] -to [get_clocks ulpiClk] -through [get_pins -regexp {.*R2B[/]busCC.*[|]Q}] 2
+#set_false_path -hold  -from [get_clocks adcClk] -to [get_clocks ulpiClk] -through [get_pins -regexp {.*R2B[/]busCC.*[|]Q}]

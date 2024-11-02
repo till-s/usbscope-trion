@@ -5,7 +5,7 @@
 
 # Efinity Interface Designer SDC
 # Version: 2024.1.163.1.8
-# Date: 2024-08-05 09:19
+# Date: 2024-08-21 21:42
 
 # Copyright (C) 2013 - 2024 Efinix Inc. All rights reserved.
 
@@ -19,6 +19,7 @@ create_clock -period 7.6923 adcClk
 create_clock -period 16.6667 ulpiClk
 create_clock -period 6.0000 sdram_smpl_clk
 create_clock -period 6.0000 sdram_clk
+create_clock -period 20.0000 fpgaClk
 
 # GPIO Constraints
 ####################
@@ -50,10 +51,12 @@ set_input_delay -clock adcClk -reference_pin [get_ports {adcClk~CLKOUT~159~25}] 
 # set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {ulpiDir}]
 # set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {ulpiNxt}]
 # set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {ulpiNxt}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[9]}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[9]}]
 set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~228}] -max 0.610 [get_ports {sdram_A[0]}]
 set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~228}] -min -0.085 [get_ports {sdram_A[0]}]
-set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~238}] -max 0.610 [get_ports {sdram_A[1]}]
-set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~238}] -min -0.085 [get_ports {sdram_A[1]}]
+set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~241}] -max 0.610 [get_ports {sdram_A[1]}]
+set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~241}] -min -0.085 [get_ports {sdram_A[1]}]
 set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~236}] -max 0.610 [get_ports {sdram_A[2]}]
 set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~236}] -min -0.085 [get_ports {sdram_A[2]}]
 set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~231}] -max 0.610 [get_ports {sdram_A[3]}]
@@ -82,8 +85,8 @@ set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~
 set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~201}] -min -0.085 [get_ports {sdram_BA[1]}]
 set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~168}] -max 0.610 [get_ports {sdram_CASb}]
 set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~168}] -min -0.085 [get_ports {sdram_CASb}]
-set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~159~236}] -max 0.610 [get_ports {sdram_CKE}]
-set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~159~236}] -min -0.085 [get_ports {sdram_CKE}]
+set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~238}] -max 0.610 [get_ports {sdram_CKE}]
+set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~238}] -min -0.085 [get_ports {sdram_CKE}]
 set_output_delay -clock_fall -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~159~143}] -max 0.610 [get_ports {sdram_clkout_HI}]
 set_output_delay -clock_fall -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~159~143}] -min -0.085 [get_ports {sdram_clkout_HI}]
 set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~159~143}] -max 0.610 [get_ports {sdram_clkout_LO}]
@@ -106,6 +109,12 @@ set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {spiSClk}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {ulpiRstb}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {ulpiRstb}]
+# set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {i2cSCL_IN}]
+# set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {i2cSCL_IN}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {i2cSCL_OUT}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {i2cSCL_OUT}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {i2cSCL_OE}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {i2cSCL_OE}]
 set_input_delay -clock sdram_smpl_clk -reference_pin [get_ports {sdram_smpl_clk~CLKOUT~1~25}] -max 0.858 [get_ports {sdram_DQ_IN[0]}]
 set_input_delay -clock sdram_smpl_clk -reference_pin [get_ports {sdram_smpl_clk~CLKOUT~1~25}] -min 0.429 [get_ports {sdram_DQ_IN[0]}]
 set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~1~26}] -max 0.610 [get_ports {sdram_DQ_OUT[0]}]
@@ -259,12 +268,12 @@ set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~15
 
 # LVDS RX GPIO Constraints
 ############################
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[0]}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[0]}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[1]}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[1]}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[2]}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[2]}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {adcCSb}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {adcCSb}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {adcSClk}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {adcSClk}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {adcSync}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {adcSync}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[3]}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[3]}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[4]}]
@@ -277,26 +286,6 @@ set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~15
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[7]}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[8]}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[8]}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[9]}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[9]}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[10]}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[10]}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[11]}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[11]}]
-
-# LVDS Rx Constraints
-####################
-
-# LVDS TX GPIO Constraints
-############################
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {adcCSb}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {adcCSb}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {adcSClk}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {adcSClk}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {gpioDir}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {gpioDir}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[12]}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[12]}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {pgaCSb[0]}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {pgaCSb[0]}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {pgaCSb[1]}]
@@ -311,18 +300,36 @@ set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~15
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {adcSDIO_OUT}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {adcSDIO_OE}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {adcSDIO_OE}]
+
+# LVDS Rx Constraints
+####################
+
+# LVDS TX GPIO Constraints
+############################
+# set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {expIO[0]}]
+# set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {expIO[0]}]
+# set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {expIO[1]}]
+# set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {expIO[1]}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {gpioDir}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {gpioDir}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[0]}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[0]}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[1]}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[1]}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[2]}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[2]}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[10]}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[10]}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[11]}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[11]}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {led[12]}]
+# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {led[12]}]
 # set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {gpioDat_IN}]
 # set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {gpioDat_IN}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {gpioDat_OUT}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {gpioDat_OUT}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {gpioDat_OE}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {gpioDat_OE}]
-# set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {i2cSCL_IN}]
-# set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {i2cSCL_IN}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {i2cSCL_OUT}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {i2cSCL_OUT}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {i2cSCL_OE}]
-# set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {i2cSCL_OE}]
 # set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {i2cSDA_IN}]
 # set_input_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -min <MIN CALCULATION> [get_ports {i2cSDA_IN}]
 # set_output_delay -clock <CLOCK> [-reference_pin <clkout_pad>] -max <MAX CALCULATION> [get_ports {i2cSDA_OUT}]
@@ -343,3 +350,5 @@ set_output_delay -clock sdram_clk -reference_pin [get_ports {sdram_clk~CLKOUT~15
 # set_clock_latency -source -hold <board_min -1.157> [get_ports {sdram_smpl_clk}]
 # set_clock_latency -source -setup <board_max -2.314> [get_ports {sdram_clk}]
 # set_clock_latency -source -hold <board_min -1.157> [get_ports {sdram_clk}]
+# set_clock_latency -source -setup <board_max -2.314> [get_ports {fpgaClk}]
+# set_clock_latency -source -hold <board_min -1.157> [get_ports {fpgaClk}]
