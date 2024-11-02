@@ -254,6 +254,10 @@ architecture rtl of scope_test_top is
    signal spiCSbCtl            : std_logic;
 
    signal extTrg               : std_logic := '0';
+   signal extTrgOut            : std_logic := '0';
+   signal extTrgOutEn          : std_logic := '0';
+   signal extTrgOutEnLst       : std_logic := '0';
+   signal gpioIsOutput         : std_logic;
 
    signal pgaCSbLocIb          : std_logic;
    signal pgaCSbLocOb          : std_logic_vector(pgaCSb'range) := (others => '1');
@@ -418,6 +422,8 @@ begin
       adcDataB                     => adcDatBReg,
 
       extTrg                       => extTrg,
+      extTrgOut                    => extTrgOut,
+      extTrgOutEn                  => extTrgOutEn,
 
       -- SDRAM interface
       sdramClk                     => sdram_clk,
@@ -529,6 +535,10 @@ begin
    begin
 
       extTrg        <= gpioDat_IN;
+      gpioDat_OUT   <= extTrgOut;
+      gpioDat_OE    <= (extTrgOutEn and extTrgOutEnLst);
+      gpioIsOutput  <= (extTrgOutEn or  extTrgOutEnLst);
+      gpioDir       <= gpioIsOutput;
 
       i2cSDA_OUT    <= bbo(BB_I2C_SDA_C);
       i2cSDA_OE     <= not bbo(BB_I2C_SDA_C);
@@ -590,12 +600,13 @@ begin
    begin
       if ( rising_edge( adcClk ) ) then
          if ( adcCnt = -2 ) then
-            adcCnt <= (others => '0');
+            adcCnt      <= (others => '0');
          else
-            adcCnt <= adcCnt + 1;
+            adcCnt      <= adcCnt + 1;
          end if;
-         adcDatAReg <= adcDatA;
-         adcDatBReg <= adcDatB;
+         adcDatAReg     <= adcDatA;
+         adcDatBReg     <= adcDatB;
+         extTrgOutEnLst <= extTrgOutEn;
       end if;
    end process P_SIM;
 
@@ -688,6 +699,7 @@ begin
          isTriggeredA,
          isTriggeredB,
          isTriggeredE,
+         gpioIsOutput,
          regs
       ) is
          variable v : std_logic_vector(led'range);
@@ -695,7 +707,7 @@ begin
          v     := (others => '0');
          v( 0) := '0';                          -- front-right, Red
          v( 1) := isTriggeredE;                 -- front-right, Green
-         v( 2) := '0';                          -- front-right, Blue
+         v( 2) := gpioIsOutput;                 -- front-right, Blue
 
          v( 3) := adcStatus(ACQ_STA_OVR_A_C);   -- CHA,         Red
          v( 4) := isTriggeredA;                 -- CHA,         Green
