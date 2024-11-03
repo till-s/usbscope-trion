@@ -15,6 +15,7 @@ use     work.BasicPkg.Slv8Array;
 use     work.BasicPkg.NaturalArray;
 use     work.AcqCtlPkg.all;
 use     work.SDRAMPkg.all;
+use     work.GitVersionPkg.all;
 
 entity scope_test_top is
    generic (
@@ -24,7 +25,6 @@ entity scope_test_top is
       --   sampling and resync to sdram_clk; the precise value also depends
       --   on the fine-tuning of the sdram_smpl_clk phase...
       SDRAM_READ_DLY_G  : natural := 3;
-      GIT_VERSION_G     : std_logic_vector(31 downto 0) := x"dead_beef";
       BOARD_VERSION_G   : std_logic_vector( 7 downto 0) := x"02";
       USE_SDRAM_BUF_G   : boolean := true;
       ADC_FREQ_G        : real    := 130.0E6;
@@ -369,7 +369,7 @@ begin
       ADC_BITS_G                   => ADC_BITS_G,
       RAM_BITS_G                   => ADC_BITS_G,
       MEM_DEPTH_G                  => MEM_DEPTH_C,
-      GIT_VERSION_G                => GIT_VERSION_G,
+      GIT_VERSION_G                => GIT_VERSION_C,
       BOARD_VERSION_G              => BOARD_VERSION_G,
       BB_DELAY_ARRAY_G             => BB_DELAY_ARRAY_C,
       SDRAM_ADDR_WIDTH_G           => FLAT_A_WIDTH_C,
