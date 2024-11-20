@@ -26,7 +26,7 @@ entity scope_test_top is
       --   on the fine-tuning of the sdram_smpl_clk phase...
       SDRAM_READ_DLY_G  : natural := 3;
       BOARD_VERSION_G   : std_logic_vector( 7 downto 0) := x"02";
-      USE_SDRAM_BUF_G   : boolean := true;
+      USE_SDRAM_BUF_G   : boolean := false;
       ADC_FREQ_G        : real    := 130.0E6;
       NO_DECIMATORS_G   : boolean := false;
       HAVE_SPI_CMD_G    : boolean := true;
