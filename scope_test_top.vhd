@@ -622,6 +622,27 @@ begin
       end if;
    end process;
 
+   U_PGA_REGS : entity work.SpiShadowReg
+      generic map (
+         NUM_REGS_G => 2,
+         REG_INIT_G => (
+            0 => x"00",
+            1 => x"00"
+         )
+      )
+      port map (
+         clk               => acmFifoClk,
+         -- resetting this does not reset the actual hardware we are caching
+         -- rst               => acmFifoRst,
+         sclkIb            => pgaSClkLocIb,
+         scsbIb            => pgaCSbLocIb,
+         mosiIb            => pgaMOSILoc,
+         misoIb            => pgaMISOLoc,
+
+         sclkOb            => pgaSClkLocOb,
+         scsbOb            => pgaCSbLocOb
+      );
+
    B_REGS : block is
    begin
       P_COMB : process (regs, regVld, regRdnw, regAddr, regWDat) is
