@@ -631,7 +631,7 @@ begin
          )
       )
       port map (
-         clk               => acmFifoClk,
+         clk               => ulpiClk,
          -- resetting this does not reset the actual hardware we are caching
          -- rst               => acmFifoRst,
          sclkIb            => pgaSClkLocIb,
