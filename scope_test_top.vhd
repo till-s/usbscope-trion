@@ -28,6 +28,7 @@ entity scope_test_top is
       BOARD_VERSION_G   : std_logic_vector( 7 downto 0) := x"02";
       USE_SDRAM_BUF_G   : boolean := false;
       ADC_FREQ_G        : real    := 130.0E6;
+      RAM_FREQ_G        : real    := 166.0E6;
       NO_DECIMATORS_G   : boolean := false;
       HAVE_SPI_CMD_G    : boolean := true;
       ADC_BITS_G        : natural := 10;
@@ -482,7 +483,7 @@ begin
          generic map (
             EXT_OUT_REG_G             => false,
             INP_REG_G                 => 2,
-            CLK_FREQ_G                => 166.0E6,
+            CLK_FREQ_G                => RAM_FREQ_G,
             A_WIDTH_G                 => SDRAM_A_WIDTH_C,
             B_WIDTH_G                 => SDRAM_B_WIDTH_C,
             C_WIDTH_G                 => SDRAM_C_WIDTH_C
