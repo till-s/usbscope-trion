@@ -250,8 +250,8 @@ design.assign_pkg_pin("adcCSb","70")
 
 design.assign_pkg_pin("pgaSClk","69")
 design.assign_pkg_pin("pgaCSb[0]","68")
-design.assign_pkg_pin("pgaSDat","67")
-design.assign_pkg_pin("pgaCSb[1]","65")
+design.assign_pkg_pin("pgaCSb[1]","67")
+design.assign_pkg_pin("pgaSDat","65")
 
 
 design.assign_pkg_pin("gpioDir","43")
