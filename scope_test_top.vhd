@@ -611,8 +611,8 @@ begin
       end if;
    end process P_SIM;
 
-   adcDatA <= ADC_DDR_HI;
-   adcDatB <= ADC_DDR_LO;
+   adcDatA <= ADC_DDR_LO;
+   adcDatB <= ADC_DDR_HI;
 
    process ( ulpiClk ) is
       variable cnt : unsigned(25 downto 0) := (others => '0');
