@@ -712,7 +712,8 @@ begin
          -- in the connection of the ad8370 output pins to the
          -- sheet output pins. B has an odd number of inversions.
          adcDatAReg     <= adcDatA;
-         adcDatBReg     <= std_logic_vector( - signed( adcDatB ) );
+         -- bit 0 is DOR; preserve
+         adcDatBReg     <= std_logic_vector( - signed( adcDatB(adcDatB'left downto 1 ) ) ) & adcDatB(0);
          extTrgOutEnLst <= extTrgOutEn;
       end if;
    end process P_SIM;
