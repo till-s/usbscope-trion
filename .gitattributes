@@ -1,4 +1,4 @@
 # For these filters to work they must be installed;
 # use the software/util/install-git-filters.sh script
-scope_test_v2.xml filter=xml_last_change
-debug_profile.wizard.json filter=debug_profile_uuid
+scope_test_v2.xml filter=efx_xml_last_change
+debug_profile.wizard.json filter=efx_debug_profile_uuid
