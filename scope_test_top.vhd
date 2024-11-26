@@ -41,18 +41,18 @@ entity scope_test_top is
       sdram_clkout_HI   : out std_logic := '1';
       sdram_clkout_LO   : out std_logic := '0';
 
-      sdram_CSb         : out std_logic;
-      sdram_CKE         : out std_logic;
-      sdram_DQML        : out std_logic;
-      sdram_DQMH        : out std_logic;
-      sdram_WEb         : out std_logic;
-      sdram_CASb        : out std_logic;
-      sdram_RASb        : out std_logic;
-      sdram_A           : out std_logic_vector(12 downto 0);
-      sdram_BA          : out std_logic_vector( 1 downto 0);
-      sdram_DQ_IN       : in  std_logic_vector(15 downto 0);
-      sdram_DQ_OUT      : out std_logic_vector(15 downto 0);
-      sdram_DQ_OE       : out std_logic_vector(15 downto 0);
+      sdram_CSb         : out std_logic := '1';
+      sdram_CKE         : out std_logic := '0';
+      sdram_DQML        : out std_logic := '0';
+      sdram_DQMH        : out std_logic := '0';
+      sdram_WEb         : out std_logic := '1';
+      sdram_CASb        : out std_logic := '1';
+      sdram_RASb        : out std_logic := '1';
+      sdram_A           : out std_logic_vector(12 downto 0) := (others => '0');
+      sdram_BA          : out std_logic_vector( 1 downto 0) := (others => '0');
+      sdram_DQ_IN       : in  std_logic_vector(15 downto 0) := (others => '0');
+      sdram_DQ_OUT      : out std_logic_vector(15 downto 0) := (others => '0');
+      sdram_DQ_OE       : out std_logic_vector(15 downto 0) := (others => '0');
       ulpiClk           : in    std_logic;
       -- NOTE    : unfortunately, the ulpiClk stops while ulpiRstb is asserted...
       ulpiRstb          : out   std_logic                    := '1';
@@ -202,14 +202,14 @@ architecture rtl of scope_test_top is
    signal sdramBusRVldDly      : std_logic_vector(SDRAM_READ_DLY_G - 1 downto 0) := (others => '0');
    signal sdramBusRVld         : std_logic    := '0';
 
-   signal sdramDQOE            : std_logic;
+   signal sdramDQOE            : std_logic    := '0';
 
-   signal ulpiIb               : UlpiIbType := ULPI_IB_INIT_C;
-   signal ulpiOb               : UlpiObType := ULPI_OB_INIT_C;
+   signal ulpiIb               : UlpiIbType   := ULPI_IB_INIT_C;
+   signal ulpiOb               : UlpiObType   := ULPI_OB_INIT_C;
    signal ulpiRx               : UlpiRxType;
-   signal ulpiRst              : std_logic := '0';
-   signal ulpiForceStp         : std_logic := '0';
-   signal usb2HiSpeedEn        : std_logic := '1';
+   signal ulpiRst              : std_logic    := '0';
+   signal ulpiForceStp         : std_logic    := '0';
+   signal usb2HiSpeedEn        : std_logic    := '1';
    signal ulpiDirB             : std_logic;
 
    signal fifoRDat             : Usb2ByteType;
