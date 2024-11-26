@@ -27,6 +27,11 @@ entity scope_test_top is
       SDRAM_READ_DLY_G  : natural := 3;
       BOARD_VERSION_G   : std_logic_vector( 7 downto 0) := x"02";
       USE_SDRAM_BUF_G   : boolean := true;
+      SDRAM_LD_ROWS_G   : natural := 13; -- log2 of number of rows
+      SDRAM_LD_COLS_G   : natural := 9;  -- log2 of number of columns
+      SDRAM_LD_BNKS_G   : natural := 2;  -- log2 of number of banks
+      -- block-ram depth (# samples) if USE_SDRAM_BUF_G is false; ignored otherwise
+      BRAM_LD_DEPTH_G   : natural := 11;
       ADC_FREQ_G        : real    := 130.0E6;
       RAM_FREQ_G        : real    := 166.0E6;
       NO_DECIMATORS_G   : boolean := false;
@@ -133,19 +138,32 @@ architecture rtl of scope_test_top is
       return v;
    end function toSlv;
 
+   function SDRAM_NSMPL_MAX_F(constant x : natural; constant align : natural) return natural is
+      variable v : natural;
+   begin
+      v := x;
+      if ( USE_SDRAM_BUF_G ) then
+         v := v * 8 / ADC_BITS_G;
+      end if;
+      v := v / align;
+      v := v * align;
+      return v;
+   end function SDRAM_NSMPL_MAX_F;
+
    -- must cover bulk max pkt size
    constant LD_FIFO_OUT_C      : natural :=  9;
    constant LD_FIFO_INP_C      : natural :=  9;
-   constant SDRAM_A_WIDTH_C    : natural := 13; -- row
-   constant SDRAM_B_WIDTH_C    : natural :=  2; -- bank
-   constant SDRAM_C_WIDTH_C    : natural :=  9; -- bank
+   constant SDRAM_A_WIDTH_C    : natural := SDRAM_LD_ROWS_G;
+   constant SDRAM_B_WIDTH_C    : natural := SDRAM_LD_BNKS_G;
+   constant SDRAM_C_WIDTH_C    : natural := SDRAM_LD_COLS_G;
    constant FLAT_A_WIDTH_C     : natural := SDRAM_A_WIDTH_C + SDRAM_B_WIDTH_C + SDRAM_C_WIDTH_C;
-   constant NSMPL_MAX_C        : natural := (2**FLAT_A_WIDTH_C * 4)/5;
+   -- make a multiple of 1024
+   constant SDRAM_NSMPL_MAX_C  : natural := SDRAM_NSMPL_MAX_F(2**FLAT_A_WIDTH_C, 1024);
 
    constant ULPI_CLK_FREQ_C    : real    := 60.0E6;
    constant ACM_CLK_FREQ_C     : real    := ULPI_CLK_FREQ_C;
 
-   constant MEM_DEPTH_C        : natural := ite( USE_SDRAM_BUF_G, 3354624, 2048 );
+   constant MEM_DEPTH_C        : natural := ite( USE_SDRAM_BUF_G, SDRAM_NSMPL_MAX_C, 2**BRAM_LD_DEPTH_G );
 
    function BB_DELAY_ARRAY_F   return NaturalArray is
       variable v : NaturalArray( 0 to 2**SubCommandBBType'length - 1 ) := (others => 1);
@@ -270,6 +288,10 @@ architecture rtl of scope_test_top is
    signal pgaSClkLocOb         : std_logic_vector(pgaCSb'range);
 
 begin
+
+   assert not USE_SDRAM_BUF_G or ADC_BITS_G = 10 or ADC_BITS_G = 8
+      report "SDRAM buffer only supports 10 or 8 ADC bits"
+      severity failure;
 
    G_SYNC : if ( USE_SMPL_CLK_G ) generate
       G_SYNC_BIT : for i in sdram_DQ_IN'range generate
