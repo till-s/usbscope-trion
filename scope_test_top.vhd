@@ -708,8 +708,11 @@ begin
          else
             adcCnt      <= adcCnt + 1;
          end if;
+         -- watch out in the schematics - there is a pol. swap
+         -- in the connection of the ad8370 output pins to the
+         -- sheet output pins. B has an odd number of inversions.
          adcDatAReg     <= adcDatA;
-         adcDatBReg     <= adcDatB;
+         adcDatBReg     <= std_logic_vector( - signed( adcDatB ) );
          extTrgOutEnLst <= extTrgOutEn;
       end if;
    end process P_SIM;
