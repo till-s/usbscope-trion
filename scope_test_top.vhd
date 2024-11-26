@@ -239,11 +239,13 @@ architecture rtl of scope_test_top is
    type RegType is record
       led         : std_logic_vector(led'range);
       isTriggered : std_logic;
+      sel         : unsigned(7 downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
       led         => (others => '0'),
-      isTriggered => '0'
+      isTriggered => '0',
+      sel         => (others => '1')
    );
 
    signal regs                 : RegType   := REG_INIT_C;
@@ -515,6 +517,85 @@ begin
 
    end generate G_SDRAM_CTRL;
 
+   G_SDRAM_DBG : if ( not USE_SDRAM_BUF_G ) generate
+
+      type SDRAMDbgType is record
+         CSb         : std_logic;
+         CKE         : std_logic;
+         DQML        : std_logic;
+         DQMH        : std_logic;
+         WEb         : std_logic;
+         A           : std_logic_vector(SDRAM_A_WIDTH_C - 1 downto 0);
+         CASb        : std_logic;
+         RASb        : std_logic;
+         BA          : std_logic_vector( 1 downto 0);
+         DQ_OUT      : std_logic_vector(15 downto 0);
+         DQOE        : std_logic;
+      end record SDRAMDbgType;
+
+      constant SDRAM_DBG_INIT_C : SDRAMDbgType := (
+         CSb         => '1',
+         CKE         => '0',
+         DQML        => '0',
+         DQMH        => '0',
+         WEb         => '1',
+         A           => (others => '0'),
+         CASb        => '1',
+         RASb        => '1',
+         BA          => (others => '0'),
+         DQ_OUT      => (others => '0'),
+         DQOE        => '0'
+      );
+
+      signal r   : SDRAMDbgType := SDRAM_DBG_INIT_C;
+
+   begin
+      P_CMB : process ( regs, r ) is
+         variable v : SDRAMDbgType;
+         variable s : natural;
+      begin
+         v := SDRAM_DBG_INIT_C;
+         s := to_integer(regs.sel);
+         if    ( s < r.DQ_OUT'length                                 ) then
+            v.DQOE        := '1';
+            v.DQ_OUT( s ) := '1';
+         elsif ( s < r.DQ_OUT'length + r.A'length                    ) then
+            s := s - r.DQ_OUT'length;
+            v.A( s )      := '1';
+         elsif ( s < r.DQ_OUT'length + r.A'length + r.BA'length      ) then
+            s := s - r.DQ_OUT'length - r.A'length;
+            v.BA(s)       := '1';
+         elsif ( s < r.DQ_OUT'length + r.A'length + r.BA'length + 1  ) then
+            v.CSb         := '0';
+         elsif ( s < r.DQ_OUT'length + r.A'length + r.BA'length + 2  ) then
+            v.CKE         := '1';
+         elsif ( s < r.DQ_OUT'length + r.A'length + r.BA'length + 3  ) then
+            v.DQML        := '1';
+         elsif ( s < r.DQ_OUT'length + r.A'length + r.BA'length + 4  ) then
+            v.DQMH        := '1';
+         elsif ( s < r.DQ_OUT'length + r.A'length + r.BA'length + 5  ) then
+            v.WEb         := '0';
+         elsif ( s < r.DQ_OUT'length + r.A'length + r.BA'length + 6  ) then
+            v.CASb        := '0';
+         elsif ( s < r.DQ_OUT'length + r.A'length + r.BA'length + 7  ) then
+            v.RASb        := '0';
+         end if;
+         r <= v;
+      end process P_CMB;
+
+      sdram_CSb              <= r.CSb;
+      sdram_CKE              <= r.CKE;
+      sdram_DQML             <= r.DQML;
+      sdram_DQMH             <= r.DQMH;
+      sdram_A(r.A'range)     <= r.A;
+      sdram_WEb              <= r.WEb;
+      sdram_CASb             <= r.CASb;
+      sdram_RASb             <= r.Rasb;
+      sdram_BA               <= r.BA;
+      sdram_DQ_OUT           <= r.DQ_OUT;
+      sdramDQOE              <= r.DQOE;
+   end generate G_SDRAM_DBG;
+
    sdram_A(sdram_A'left downto SDRAM_A_WIDTH_C) <= ( others => '0' );
 
    sdram_DQ_OE   <= (others => sdramDQOE);
@@ -675,6 +756,11 @@ begin
                if ( ( v.isTriggered and regs.isTriggered ) = '1' ) then
                   isTriggeredLoc <= '0';
                end if;
+            end if;
+         elsif  ( not USE_SDRAM_BUF_G and ( regAddr = 3 ) ) then
+            regRDat <= std_logic_vector( regs.sel );
+            if ( (regVld and not regRdnw) = '1' ) then
+               v.sel := unsigned( regWDat );
             end if;
          else
             regErr <= '1';
