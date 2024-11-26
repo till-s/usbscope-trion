@@ -295,7 +295,7 @@ begin
 
       end generate G_SYNC_BIT;
    end generate G_SYNC;
-   
+
    G_NO_SYNC : if ( not USE_SMPL_CLK_G ) generate
    begin
       P_IN_REG : process ( sdram_clk ) is
@@ -305,7 +305,7 @@ begin
          end if;
       end process P_IN_REG;
    end generate G_NO_SYNC;
-   
+
    P_DLY_REG : process ( sdram_clk ) is
    begin
       if ( rising_edge( sdram_clk ) ) then
@@ -780,7 +780,7 @@ begin
          end if;
       end process P_SEQ;
    end block B_REGS;
-   
+
    B_LEDS : block is
       signal isTriggeredAny, isTriggeredA, isTriggeredB, isTriggeredE : std_logic;
    begin
