@@ -31,7 +31,7 @@ entity scope_test_top is
       SDRAM_LD_COLS_G   : natural := 9;  -- log2 of number of columns
       SDRAM_LD_BNKS_G   : natural := 2;  -- log2 of number of banks
       -- block-ram depth (# samples) if USE_SDRAM_BUF_G is false; ignored otherwise
-      BRAM_LD_DEPTH_G   : natural := 11;
+      BRAM_DEPTH_G      : natural := 1024*36;
       ADC_FREQ_G        : real    := 130.0E6;
       RAM_FREQ_G        : real    := 166.0E6;
       NO_DECIMATORS_G   : boolean := false;
@@ -163,7 +163,7 @@ architecture rtl of scope_test_top is
    constant ULPI_CLK_FREQ_C    : real    := 60.0E6;
    constant ACM_CLK_FREQ_C     : real    := ULPI_CLK_FREQ_C;
 
-   constant MEM_DEPTH_C        : natural := ite( USE_SDRAM_BUF_G, SDRAM_NSMPL_MAX_C, 2**BRAM_LD_DEPTH_G );
+   constant MEM_DEPTH_C        : natural := ite( USE_SDRAM_BUF_G, SDRAM_NSMPL_MAX_C, BRAM_DEPTH_G );
 
    function BB_DELAY_ARRAY_F   return NaturalArray is
       variable v : NaturalArray( 0 to 2**SubCommandBBType'length - 1 ) := (others => 1);
