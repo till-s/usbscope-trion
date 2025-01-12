@@ -160,6 +160,8 @@ architecture rtl of scope_test_top is
    -- make a multiple of 1024
    constant SDRAM_NSMPL_MAX_C  : natural := SDRAM_NSMPL_MAX_F(2**FLAT_A_WIDTH_C, 1024);
 
+   constant ADC_RST_CNT_C      : signed(12 downto 0) := to_signed(-2000, 13);
+
    constant ULPI_CLK_FREQ_C    : real    := 60.0E6;
    constant ACM_CLK_FREQ_C     : real    := ULPI_CLK_FREQ_C;
 
@@ -243,7 +245,8 @@ architecture rtl of scope_test_top is
    signal adcDatB              : std_logic_vector(ADC_BITS_G downto 0) := (others => '0');
    signal adcDatAReg           : std_logic_vector(ADC_BITS_G downto 0) := (others => '0');
    signal adcDatBReg           : std_logic_vector(ADC_BITS_G downto 0) := (others => '0');
-   signal adcCnt               : signed(ADC_BITS_G - 1 downto 0)       := (others => '0');
+   signal adcRstCnt            : signed(ADC_RST_CNT_C'range)  := ADC_RST_CNT_C;
+   signal adcRst               : std_logic;
    signal adcStatus            : std_logic_vector(7 downto 0);
 
    signal regRDat              : std_logic_vector(7 downto 0) := (others => '0');
@@ -421,8 +424,7 @@ begin
       subCmdBB                     => subCmdBB, --: out SubCommandBBType;
 
       adcStatus                    => adcStatus, --: out std_logic_vector(7 downto 0) := (others => '0');
-      err(0)                       => open,
-      err(1)                       => open,
+      err                          => open,
 
       -- register interface
       regClk                       => ulpiClk,
@@ -440,7 +442,7 @@ begin
       spiMISO                      => spiMISO, --: in  std_logic := '0';
 
       adcClk                       => adcClk,
-      adcRst                       => open,
+      adcRst                       => adcRst,
 
       -- bit 0 is the DOR (overrange) bit
       adcDataA                     => adcDatAReg,
@@ -700,14 +702,22 @@ begin
 
    end block B_IO;
 
-   P_SIM : process ( adcClk ) is
+   P_ADC_CLK_RST : process ( adcClk ) is
    begin
       if ( rising_edge( adcClk ) ) then
-         if ( adcCnt = -2 ) then
-            adcCnt      <= (others => '0');
-         else
-            adcCnt      <= adcCnt + 1;
+         if ( adcPllLocked = '0' ) then
+            adcRstCnt <= ADC_RST_CNT_C;
+         elsif ( adcRstCnt < 0 ) then
+            adcRstCnt <= adcRstCnt + 1;
          end if;
+      end if;
+   end process P_ADC_CLK_RST;
+
+   adcRst <= adcRstCnt( adcRstCnt'left );
+
+   P_SMPL_SIGN : process ( adcClk ) is
+   begin
+      if ( rising_edge( adcClk ) ) then
          -- watch out in the schematics - there is a pol. swap
          -- in the connection of the ad8370 output pins to the
          -- sheet output pins. B has an odd number of inversions.
@@ -716,7 +726,7 @@ begin
          adcDatBReg     <= std_logic_vector( - signed( adcDatB(adcDatB'left downto 1 ) ) ) & adcDatB(0);
          extTrgOutEnLst <= extTrgOutEn;
       end if;
-   end process P_SIM;
+   end process P_SMPL_SIGN;
 
    adcDatA <= ADC_DDR_LO;
    adcDatB <= ADC_DDR_HI;
