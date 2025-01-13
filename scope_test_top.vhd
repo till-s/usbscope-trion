@@ -762,7 +762,7 @@ begin
 
    B_REGS : block is
    begin
-      P_COMB : process (regs, regVld, regRdnw, regAddr, regWDat) is
+      P_COMB : process (regs, regVld, regRdnw, regAddr, regWDat, adcStatus, adcPllLocked) is
          variable v : RegType;
       begin
          v              := regs;
@@ -793,7 +793,11 @@ begin
                   isTriggeredLoc <= '0';
                end if;
             end if;
-         elsif  ( not USE_SDRAM_BUF_G and ( regAddr = 3 ) ) then
+         elsif  ( regAddr = 3 ) then
+            regRDat    <= adcStatus;
+         elsif  ( regAddr = 4 ) then
+            regRDat(0) <= adcPllLocked;
+         elsif  ( not USE_SDRAM_BUF_G and ( regAddr = 7 ) ) then
             regRDat <= std_logic_vector( regs.sel );
             if ( (regVld and not regRdnw) = '1' ) then
                v.sel := unsigned( regWDat );
