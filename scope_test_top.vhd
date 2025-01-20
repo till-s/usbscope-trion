@@ -89,6 +89,11 @@ entity scope_test_top is
       adcSDIO_IN        : in    std_logic;
       adcSDIO_OUT       : out   std_logic := '0';
       adcSDIO_OE        : out   std_logic := '0';
+      -- SHDN is pulled-up externally; this shuts the ADC down
+      -- during configuration and ensures the Trion 'sees' the
+      -- CBUS pins undriven by the ADC.
+      -- After config. we can just hold it to '0'.
+      adcShdn           : out   std_logic := '0';
       adcCSb            : out   std_logic := '1';
 
       pgaSClk           : out   std_logic := '0';
