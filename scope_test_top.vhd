@@ -14,7 +14,9 @@ use     work.CommandMuxPkg.all;
 use     work.BasicPkg.Slv8Array;
 use     work.BasicPkg.NaturalArray;
 use     work.AcqCtlPkg.all;
-use     work.SDRAMPkg.all;
+use     work.SDRAMCtrlPkg.all;
+use     work.SDRAMUtilPkg.all;
+use     work.SDRAMBufPkg.all;
 use     work.GitVersionPkg.all;
 
 entity scope_test_top is
@@ -27,13 +29,13 @@ entity scope_test_top is
       SDRAM_READ_DLY_G  : natural := 3;
       BOARD_VERSION_G   : std_logic_vector( 7 downto 0) := x"02";
       USE_SDRAM_BUF_G   : boolean := true;
-      SDRAM_LD_ROWS_G   : natural := 13; -- log2 of number of rows
-      SDRAM_LD_COLS_G   : natural := 9;  -- log2 of number of columns
-      SDRAM_LD_BNKS_G   : natural := 2;  -- log2 of number of banks
       -- block-ram depth (# samples) if USE_SDRAM_BUF_G is false; ignored otherwise
       BRAM_DEPTH_G      : natural := 1024*36;
       ADC_FREQ_G        : real    := 130.0E6;
+      -- when using the SDRAM buffer it is important to set RAM_FREQ_G to the
+      -- actual clock frequency in order to get refresh- and other timing right!
       RAM_FREQ_G        : real    := 166.0E6;
+      RAM_DEVICE_G      : SDRAMDevParamsType := INSIGNIS_NDS36PT5_16ET_C;
       NO_DECIMATORS_G   : boolean := false;
       HAVE_SPI_CMD_G    : boolean := true;
       ADC_BITS_G        : natural := 10;
@@ -158,10 +160,10 @@ architecture rtl of scope_test_top is
    -- must cover bulk max pkt size
    constant LD_FIFO_OUT_C      : natural :=  9;
    constant LD_FIFO_INP_C      : natural :=  9;
-   constant SDRAM_A_WIDTH_C    : natural := SDRAM_LD_ROWS_G;
-   constant SDRAM_B_WIDTH_C    : natural := SDRAM_LD_BNKS_G;
-   constant SDRAM_C_WIDTH_C    : natural := SDRAM_LD_COLS_G;
-   constant FLAT_A_WIDTH_C     : natural := SDRAM_A_WIDTH_C + SDRAM_B_WIDTH_C + SDRAM_C_WIDTH_C;
+   constant SDRAM_R_WIDTH_C    : natural := RAM_DEVICE_G.R_WIDTH;
+   constant SDRAM_B_WIDTH_C    : natural := RAM_DEVICE_G.B_WIDTH;
+   constant SDRAM_C_WIDTH_C    : natural := RAM_DEVICE_G.C_WIDTH;
+   constant FLAT_A_WIDTH_C     : natural := SDRAM_R_WIDTH_C + SDRAM_B_WIDTH_C + SDRAM_C_WIDTH_C;
    -- make a multiple of 1024
    constant SDRAM_NSMPL_MAX_C  : natural := SDRAM_NSMPL_MAX_F(2**FLAT_A_WIDTH_C, 1024);
 
@@ -299,6 +301,10 @@ begin
 
    assert not USE_SDRAM_BUF_G or ADC_BITS_G = 10 or ADC_BITS_G = 8
       report "SDRAM buffer only supports 10 or 8 ADC bits"
+      severity failure;
+
+   assert not USE_SDRAM_BUF_G or SDRAM_FREQUENCY_CHECK_F( ADC_FREQ_G, RAM_FREQ_G, ADC_BITS_G, RAM_DEVICE_G )
+      report "ADC clock frequency too high for RAM device"
       severity failure;
 
    G_SYNC : if ( USE_SMPL_CLK_G ) generate
@@ -515,9 +521,7 @@ begin
             EXT_OUT_REG_G             => false,
             INP_REG_G                 => 2,
             CLK_FREQ_G                => RAM_FREQ_G,
-            A_WIDTH_G                 => SDRAM_A_WIDTH_C,
-            B_WIDTH_G                 => SDRAM_B_WIDTH_C,
-            C_WIDTH_G                 => SDRAM_C_WIDTH_C
+            DEV_PARAMS_G              => RAM_DEVICE_G
          )
          port map (
             clk                       => sdram_clk,
@@ -537,7 +541,7 @@ begin
             sdramWEb                  => sdram_WEb,
             sdramCASb                 => sdram_CASb,
             sdramRASb                 => sdram_RASb,
-            sdramAddr                 => sdram_A(SDRAM_A_WIDTH_C - 1 downto 0),
+            sdramAddr                 => sdram_A(SDRAM_R_WIDTH_C - 1 downto 0),
             sdramBank                 => sdram_BA,
             sdramDQInp                => syncDQIn,
             sdramDQOut                => sdram_DQ_OUT,
@@ -554,7 +558,7 @@ begin
          DQML        : std_logic;
          DQMH        : std_logic;
          WEb         : std_logic;
-         A           : std_logic_vector(SDRAM_A_WIDTH_C - 1 downto 0);
+         A           : std_logic_vector(SDRAM_R_WIDTH_C - 1 downto 0);
          CASb        : std_logic;
          RASb        : std_logic;
          BA          : std_logic_vector( 1 downto 0);
@@ -625,7 +629,7 @@ begin
       sdramDQOE              <= r.DQOE;
    end generate G_SDRAM_DBG;
 
-   sdram_A(sdram_A'left downto SDRAM_A_WIDTH_C) <= ( others => '0' );
+   sdram_A(sdram_A'left downto SDRAM_R_WIDTH_C) <= ( others => '0' );
 
    sdram_DQ_OE   <= (others => sdramDQOE);
 

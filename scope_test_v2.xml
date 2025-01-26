@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<efx:project name="scope_test_v2" description="" last_change="" sw_version="2024.1.163.1.8" last_run_state="pass" last_run_flow="bitstream" config_result_in_sync="true" design_ood="change" place_ood="sync" route_ood="sync" xmlns:efx="http://www.efinixinc.com/enf_proj" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.efinixinc.com/enf_proj enf_proj.xsd">
+<efx:project name="scope_test_v2" description="" last_change="" sw_version="2024.1.163.1.8" last_run_state="pass" last_run_flow="bitstream" config_result_in_sync="true" design_ood="sync" place_ood="sync" route_ood="sync" xmlns:efx="http://www.efinixinc.com/enf_proj" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.efinixinc.com/enf_proj enf_proj.xsd">
     <efx:device_info>
         <efx:family name="Trion"/>
         <efx:device name="T20Q144"/>
@@ -8,6 +8,7 @@
     <efx:design_info def_veri_version="verilog_2k" def_vhdl_version="vhdl_2008">
         <efx:top_module name="scope_test_top"/>
         <efx:design_file name="scope_test_top.vhd" version="default" library="default"/>
+        <efx:design_file name="SDRAMUtilPkg.vhd" version="default" library="default"/>
         <efx:design_file name="modules/mecatica-usb/core/hdl/Usb2Bram.vhd" version="default" library="default"/>
         <efx:design_file name="modules/mecatica-usb/core/hdl/Usb2MboxSync.vhd" version="default" library="default"/>
         <efx:design_file name="modules/mecatica-usb/core/hdl/Usb2Core.vhd" version="default" library="default"/>
@@ -82,9 +83,10 @@
         <efx:design_file name="modules/usbadc-support/hdl/SpiShadowReg.vhd" version="default" library="default"/>
         <efx:design_file name="modules/usbadc-support/hdl/SynchronizerBit.vhd" version="default" library="default"/>
         <efx:design_file name="modules/usbadc-support/hdl/WordSpiIF.vhd" version="default" library="default"/>
+        <efx:design_file name="modules/SDRAMCtrl/SDRAMCtrlPkg.vhd" version="default" library="default"/>
         <efx:design_file name="modules/SDRAMCtrl/SDRAMCtrl.vhd" version="default" library="default"/>
         <efx:design_file name="AppCfgPkgBody.vhd" version="default" library="default"/>
-        <efx:design_file name="modules/usbadc-support/hdl/SDRAMPkg.vhd" version="default" library="default"/>
+        <efx:design_file name="modules/usbadc-support/hdl/SDRAMBufPkg.vhd" version="default" library="default"/>
         <efx:design_file name="modules/usbadc-support/hdl/GenericFifoAsync.vhd" version="default" library="default"/>
         <efx:design_file name="modules/usbadc-support/hdl/SampleBufferSDRAM.vhd" version="default" library="default"/>
         <efx:design_file name="modules/usbadc-support/hdl/SampleBufferBRAM.vhd" version="default" library="default"/>
