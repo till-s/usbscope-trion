@@ -739,8 +739,8 @@ begin
    end process P_SMPL_SIGN;
 
    -- 8-bit device uses 8 most-significant bits
-   adcDatA(adcDatA'left downto 1) <= ADC_DDR_LO(ADC_DDR_LO'left downto ADC_DDR_LO'length - ADC_BITS_G + 1);
-   adcDatB(adcDatB'left downto 1) <= ADC_DDR_HI(ADC_DDR_HI'left downto ADC_DDR_HI'length - ADC_BITS_G + 1);
+   adcDatA(adcDatA'left downto 1) <= ADC_DDR_LO(ADC_DDR_LO'left downto ADC_DDR_LO'length - ADC_BITS_G);
+   adcDatB(adcDatB'left downto 1) <= ADC_DDR_HI(ADC_DDR_HI'left downto ADC_DDR_HI'length - ADC_BITS_G);
    -- overflow bit is always in position 0
    adcDatA(0)                     <= ADC_DDR_LO(0);
    adcDatB(0)                     <= ADC_DDR_HI(0);
