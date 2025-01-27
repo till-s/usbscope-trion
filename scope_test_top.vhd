@@ -111,8 +111,9 @@ entity scope_test_top is
 
       adcClk            : in    std_logic;
       adcPllLocked      : in    std_logic;
-      ADC_DDR_HI        : in    std_logic_vector(ADC_BITS_G downto 0);
-      ADC_DDR_LO        : in    std_logic_vector(ADC_BITS_G downto 0);
+      -- up to 10 data bits and the over-range bit in position 0
+      ADC_DDR_HI        : in    std_logic_vector(10 downto 0);
+      ADC_DDR_LO        : in    std_logic_vector(10 downto 0);
 
       -- aux/fallback clock
       fpgaClk           : in    std_logic
@@ -737,8 +738,12 @@ begin
       end if;
    end process P_SMPL_SIGN;
 
-   adcDatA <= ADC_DDR_LO;
-   adcDatB <= ADC_DDR_HI;
+   -- 8-bit device uses 8 most-significant bits
+   adcDatA(adcDatA'left downto 1) <= ADC_DDR_LO(ADC_DDR_LO'left downto ADC_DDR_LO'length - ADC_BITS_G + 1);
+   adcDatB(adcDatB'left downto 1) <= ADC_DDR_HI(ADC_DDR_HI'left downto ADC_DDR_HI'length - ADC_BITS_G + 1);
+   -- overflow bit is always in position 0
+   adcDatA(0)                     <= ADC_DDR_LO(0);
+   adcDatB(0)                     <= ADC_DDR_HI(0);
 
    process ( ulpiClk ) is
       variable cnt : unsigned(25 downto 0) := (others => '0');
