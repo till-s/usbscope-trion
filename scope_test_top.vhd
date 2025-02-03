@@ -304,9 +304,14 @@ begin
       report "SDRAM buffer only supports 10 or 8 ADC bits"
       severity failure;
 
-   assert not USE_SDRAM_BUF_G or SDRAM_FREQUENCY_CHECK_F( ADC_FREQ_G, RAM_FREQ_G, ADC_BITS_G, RAM_DEVICE_G )
-      report "ADC clock frequency too high for RAM device"
-      severity failure;
+   G_CHECK : if ( USE_SDRAM_BUF_G ) generate
+      SDRAM_COMPATIBILITY_CHECK_P(
+         adcClockFreqHz => ADC_FREQ_G,
+         ramClockFreqHz => RAM_FREQ_G,
+         sampleSizeBits => ADC_BITS_G,
+         deviceParams   => RAM_DEVICE_G
+      );
+   end generate G_CHECK;
 
    G_SYNC : if ( USE_SMPL_CLK_G ) generate
       G_SYNC_BIT : for i in sdram_DQ_IN'range generate

@@ -66,17 +66,47 @@ package SDRAMUtilPkg is
       constant numChannels    : in  natural := 2
    ) return real;
 
-   function SDRAM_FREQUENCY_CHECK_F(
+   function SDRAM_MIN_RAM_FREQ_F(
+      constant adcClockFreqHz : in  real;
+      constant sampleSizeBits : in  natural;
+      constant deviceParams   : in  SDRAMDevParamsType;
+      constant numChannels    : in  natural := 2
+   ) return real;
+
+   procedure SDRAM_COMPATIBILITY_CHECK_P(
       constant adcClockFreqHz : in  real;
       constant ramClockFreqHz : in  real;
       constant sampleSizeBits : in  natural;
       constant deviceParams   : in  SDRAMDevParamsType;
       constant numChannels    : in  natural := 2
-   ) return boolean;
+   );
 
 end package SDRAMUtilPkg;
 
 package body SDRAMUtilPkg is
+
+   function BOOST_REFRESH_F (
+      constant deviceParams   : in  SDRAMDevParamsType
+   )
+   return real is
+      variable v : real;
+   begin
+      v := (deviceParams.T_RP + deviceParams.T_RFC);
+      v := v / (deviceParams.T_REF/2.0**deviceParams.R_WIDTH);
+      return (1.0 + v);
+   end function BOOST_REFRESH_F;
+
+   function BOOST_ACTIVATE_F (
+      constant ramClockFreqHz : in  real;
+      constant deviceParams   : in  SDRAMDevParamsType
+   )
+   return real is
+      variable v : real;
+   begin
+      v := (realmin(ceil(deviceParams.T_RCD * ramClockFreqHz),2.0) + 1.0);
+      v := v / 2.0**deviceParams.C_WIDTH;
+      return (1.0 + v);
+   end function BOOST_ACTIVATE_F;
 
    function SDRAM_MAX_ADC_FREQ_F(
       constant ramClockFreqHz : in  real;
@@ -91,24 +121,51 @@ package body SDRAMUtilPkg is
          return 0.0;
       end if;
       maxFreq := ramClockFreqHz * (16.0/real(numChannels*sampleSizeBits));
-      maxFreq := maxFreq / (1.0 + (realmin(ceil(deviceParams.T_RCD * ramClockFreqHz),2.0) + 1.0)/2.0**deviceParams.C_WIDTH);
-      maxFreq := maxFreq / (1.0 + (deviceParams.T_RP + deviceParams.T_RFC)/(deviceParams.T_REF/2.0**deviceParams.R_WIDTH));
+      maxFreq := maxFreq / BOOST_REFRESH_F( deviceParams );
+      maxFreq := maxFreq / BOOST_ACTIVATE_F( ramClockFreqHz, deviceParams );
       return maxFreq;
    end function SDRAM_MAX_ADC_FREQ_F;
 
-   function SDRAM_FREQUENCY_CHECK_F(
+   procedure SDRAM_COMPATIBILITY_CHECK_P(
       constant adcClockFreqHz : in  real;
       constant ramClockFreqHz : in  real;
       constant sampleSizeBits : in  natural;
       constant deviceParams   : in  SDRAMDevParamsType;
       constant numChannels    : in  natural := 2
-   )
-   return boolean is
+   ) is
    begin
-      if ( ramClockFreqHz > deviceParams.CLK_FREQ_MAX ) then
-         return false;
-      end if;
-      return adcClockFreqHz < SDRAM_MAX_ADC_FREQ_F(ramClockFreqHz, sampleSizeBits, deviceParams, numChannels);
-   end function SDRAM_FREQUENCY_CHECK_F;
+      assert ( ramClockFreqHz <= deviceParams.CLK_FREQ_MAX )
+         report "RAM clock freq. higher than max. freq. supported by device"
+         severity failure;
+      assert ( adcClockFreqHz <= SDRAM_MAX_ADC_FREQ_F(ramClockFreqHz, sampleSizeBits, deviceParams, numChannels) )
+         report "ADC clock freq. too high for selected SDRAM clock frequency"
+         severity failure;
+      assert ( deviceParams.DQ_BYTES = 2 )
+         report "Only 16-bit wide SDRAM devices supported"
+         severity failure;
+   end procedure SDRAM_COMPATIBILITY_CHECK_P;
+
+   function SDRAM_MIN_RAM_FREQ_F(
+      constant adcClockFreqHz : in  real;
+      constant sampleSizeBits : in  natural;
+      constant deviceParams   : in  SDRAMDevParamsType;
+      constant numChannels    : in  natural := 2
+   )
+   return real is
+      variable boost   : real;
+      variable nboost  : real;
+      variable ramFreq : real;
+   begin
+      boost   := real(numChannels * sampleSizeBits) / 16.0;
+      boost   := boost * BOOST_REFRESH_F( deviceParams );
+      ramFreq := adcClockFreqHz * boost;
+      boost   := BOOST_ACTIVATE_F( ramFreq, deviceParams );
+      nboost  := BOOST_ACTIVATE_F( ramFreq * boost, deviceParams );
+      while ( nboost /= boost ) loop
+         boost  := nboost;
+         nboost := BOOST_ACTIVATE_F( ramFreq * boost, deviceParams );
+      end loop;
+      return ramFreq * boost;
+   end function SDRAM_MIN_RAM_FREQ_F;
 
 end package body SDRAMUtilPkg;
