@@ -890,7 +890,8 @@ begin
 
          v(12) := '0';                          -- front-left, single
 
-         led   <= v or regs.led;
+         -- leds are active-low on board version 3.2
+         led   <= not (v or regs.led);
       end process P_MAP_LED;
 
    end block B_LEDS;
