@@ -267,12 +267,14 @@ architecture rtl of scope_test_top is
 
    type RegType is record
       led         : std_logic_vector(led'range);
+      scratch     : std_logic_vector(7 downto 1);
       isTriggered : std_logic;
       sel         : unsigned(7 downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
       led         => (others => '0'),
+      scratch     => (others => '0'),
       isTriggered => '0',
       sel         => (others => '1')
    );
@@ -804,9 +806,10 @@ begin
                v.led( 2 downto 0) := regWDat(2 downto 0);
             end if;
          elsif  ( regAddr = 2 ) then
-            regRDat(0) <= regs.isTriggered;
+            regRDat <= regs.scratch & regs.isTriggered;
             if ( (regVld and not regRdnw) = '1' ) then
                v.isTriggered      := regWDat(0);
+	       v.scratch          := regWDat(7 downto 1);
                -- writing a one when bit is already active causes a flicker
                if ( ( v.isTriggered and regs.isTriggered ) = '1' ) then
                   isTriggeredLoc <= '0';
