@@ -30,6 +30,9 @@ entity scope_test_top is
       BOARD_VERSION_G   : std_logic_vector( 7 downto 0) := x"02";
       USE_SDRAM_BUF_G   : boolean := true;
       -- block-ram depth (# samples) if USE_SDRAM_BUF_G is false; ignored otherwise
+      -- T20 has 204 blocks; with 8 blocks used by USB we can use up to 196; when
+      -- optimized for area (5x1k) this yields 196/4 = 49k samples. If the debugger
+      -- is to be used then reduce accordingly.
       BRAM_DEPTH_G      : natural := 1024*36;
       ADC_FREQ_G        : real    := 130.0E6;
       -- when using the SDRAM buffer it is important to set RAM_FREQ_G to the
@@ -809,7 +812,7 @@ begin
             regRDat <= regs.scratch & regs.isTriggered;
             if ( (regVld and not regRdnw) = '1' ) then
                v.isTriggered      := regWDat(0);
-	       v.scratch          := regWDat(7 downto 1);
+               v.scratch          := regWDat(7 downto 1);
                -- writing a one when bit is already active causes a flicker
                if ( ( v.isTriggered and regs.isTriggered ) = '1' ) then
                   isTriggeredLoc <= '0';
