@@ -15,8 +15,9 @@
 
 xmlname="scope_test_v2.xml"
 constraints="scope_test_v2.pt.sdc"
+perixmlname="scope_test_v2.peri.xml"
 
-seeds="2 3"
+seeds="4 5 6 7 8 9"
 
 mkdir -p explore
 pushd explore
@@ -27,6 +28,9 @@ for i in ${seeds}; do
     pushd swipe_${i}
     if ! [ -e ${constraints} ]; then
       ln -s "../../${constraints}" .
+    fi
+    if ! [ -e ${perixmlname} ]; then
+      ln -s "../../${perixmlname}" .
     fi
     for m in ../../modules/*; do
       git config --replace-all "submodule.modules/`basename ${m}`.url" "${m}"
