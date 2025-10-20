@@ -7,3 +7,6 @@
 [submodule "modules/SDRAMCtrl"]
 	path = modules/SDRAMCtrl
 	url = ../SDRAM-controller.git
+[submodule "modules/efx-scripts"]
+	path = modules/efx-scripts
+	url = ../efx-scripts
