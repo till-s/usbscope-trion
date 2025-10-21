@@ -125,7 +125,8 @@ entity scope_test_top is
       expIO_OUT         : out   std_logic_vector(1 downto 0) := (others => '0');
 
       -- aux/fallback clock
-      fpgaClk           : in    std_logic
+      auxClk            : in    std_logic;
+      auxPllLocked      : in    std_logic
    );
 end entity scope_test_top;
 
