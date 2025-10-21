@@ -99,6 +99,7 @@ entity scope_test_top is
       -- CBUS pins undriven by the ADC.
       -- After config. we can just hold it to '0'.
       adcShdn           : out   std_logic := '0';
+      adcSync           : out   std_logic := '0';
       adcCSb            : out   std_logic := '1';
 
       pgaSClk           : out   std_logic := '0';
@@ -117,6 +118,11 @@ entity scope_test_top is
       -- up to 10 data bits and the over-range bit in position 0
       ADC_DDR_HI        : in    std_logic_vector(10 downto 0);
       ADC_DDR_LO        : in    std_logic_vector(10 downto 0);
+
+      -- expansion connector
+      expIO_IN          : in    std_logic_vector(1 downto 0);
+      expIO_OE          : out   std_logic_vector(1 downto 0) := (others => '0');
+      expIO_OUT         : out   std_logic_vector(1 downto 0) := (others => '0');
 
       -- aux/fallback clock
       fpgaClk           : in    std_logic
