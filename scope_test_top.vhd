@@ -107,7 +107,9 @@ entity scope_test_top is
       pgaCSb            : out   std_logic_vector(1 downto 0) := (others => '1');
 
       spiSClk           : out   std_logic;
-      spiMOSI           : out   std_logic;
+      spiMOSI_IN        : in    std_logic;
+      spiMOSI_OE        : out   std_logic;
+      spiMOSI_OUT       : out   std_logic;
       spiMISO           : in    std_logic;
       spiCSb            : out   std_logic;
 
@@ -310,6 +312,9 @@ architecture rtl of scope_test_top is
    signal pgaSClkLocIb         : std_logic;
    signal pgaSClkLocOb         : std_logic_vector(pgaCSb'range);
 
+   -- version 3.2 has no pull-downs on miso/mosi
+   signal hwVersion            : std_logic_vector(1 downto 0)   := (others => '1');
+
 begin
 
    assert not USE_SDRAM_BUF_G or ADC_BITS_G = 10 or ADC_BITS_G = 8
@@ -372,8 +377,9 @@ begin
    sdramBusRep.vld <= sdramBusRVldDly(0);
 
    P_INI : process ( ulpiClk ) is
-      variable cnt : unsigned(29 downto 0)        := (others => '1');
-      variable rst : std_logic_vector(3 downto 0) := (others => '1');
+      variable cnt        : unsigned(29 downto 0)        := (others => '1');
+      variable rst        : std_logic_vector(3 downto 0) := (others => '1');
+      variable spiMosiOe  : std_logic                    := '0';
       attribute ASYNC_REG of rst : variable is "TRUE";
 
    begin
@@ -381,10 +387,17 @@ begin
          if ( cnt( cnt'left ) = '1' ) then
             cnt := cnt - 1;
          end if;
+         -- when we come out of reset read the hardware rev. strapping
+         -- and flip MOSI OE
+         if ( (spiMosiOe or rst(0)) = '0' ) then
+            spiMosiOe := '1';
+            hwVersion <= not (spiMISO & spiMOSI_IN);
+         end if;
          rst := not ulpiPllLocked & rst(rst'left downto 1);
       end if;
       ulpiRst      <= rst(0);
       usb2Rst      <= rst(0);
+      spiMOSI_OE   <= spiMosiOe;
    end process P_INI;
 
    acmFifoOutVld <= not acmFifoOutEmpty;
@@ -468,7 +481,7 @@ begin
       spiSClk                      => spiSClkCtl, --: out std_logic;
       spiMOSI                      => spiMOSICtl, --: out std_logic;
       spiCSb                       => spiCSbCtl,  --: out std_logic;
-      spiMISO                      => spiMISO, --: in  std_logic := '0';
+      spiMISO                      => spiMISO,    --: in  std_logic := '0';
 
       adcClk                       => adcClk,
       adcRst                       => adcRst,
@@ -706,7 +719,7 @@ begin
          spiSClk        <= bbo(BB_SPI_SCK_C) or spiSClkCtl;
 
          pgaMOSILoc     <= bbo(BB_SPI_MSO_C);
-         spiMOSI        <= bbo(BB_SPI_MSO_C) or spiMOSICtl;
+         spiMOSI_OUT    <= bbo(BB_SPI_MSO_C) or spiMOSICtl;
 
          bbi(BB_SPI_MSI_C)               <= '0';
 
@@ -793,7 +806,7 @@ begin
 
    B_REGS : block is
    begin
-      P_COMB : process (regs, regVld, regRdnw, regAddr, regWDat, adcStatus, adcPllLocked) is
+      P_COMB : process (regs, regVld, regRdnw, regAddr, regWDat, adcStatus, adcPllLocked, hwVersion) is
          variable v : RegType;
       begin
          v              := regs;
@@ -828,7 +841,8 @@ begin
          elsif  ( regAddr = 3 ) then
             regRDat    <= adcStatus;
          elsif  ( regAddr = 4 ) then
-            regRDat(0) <= adcPllLocked;
+            regRDat(0)          <= adcPllLocked;
+            regRDat(5 downto 4) <= hwVersion;
          elsif  ( not USE_SDRAM_BUF_G and ( regAddr = 7 ) ) then
             regRDat <= std_logic_vector( regs.sel );
             if ( (regVld and not regRdnw) = '1' ) then

@@ -43,7 +43,7 @@ design.create_output_gpio("sdram_WEb")
 design.create_output_gpio("sdram_clkout")
 design.create_output_gpio("spiCSb")
 design.create_input_gpio("spiMISO")
-design.create_output_gpio("spiMOSI")
+design.create_inout_gpio("spiMOSI")
 design.create_output_gpio("spiSClk")
 design.create_input_gpio("ulpiDir")
 design.create_input_gpio("ulpiNxt")
@@ -169,6 +169,9 @@ design.set_property("auxPll","REFCLK_FREQ","25.0","PLL")
 design.set_property("auxPll","RSTN_PIN","","PLL")
 design.set_property("auxPll","FEEDBACK_MODE","CORE","PLL")
 design.set_property("auxPll","FEEDBACK_CLK","CLK0","PLL")
+design.set_property("spiMISO","PULL_OPTION","WEAK_PULLUP")
+design.set_property("spiMOSI","PULL_OPTION","WEAK_PULLUP")
+
 
 # Set resource assignment
 design.assign_pkg_pin("ADC_DDR[1]","93")
