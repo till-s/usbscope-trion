@@ -28,7 +28,7 @@ entity scope_test_top is
       --   on the fine-tuning of the sdram_smpl_clk phase...
       SDRAM_READ_DLY_G  : natural := 3;
       BOARD_VERSION_G   : std_logic_vector( 7 downto 0) := x"02";
-      USE_SDRAM_BUF_G   : boolean := false;
+      USE_SDRAM_BUF_G   : boolean := true;
       -- block-ram depth (# samples) if USE_SDRAM_BUF_G is false; ignored otherwise
       -- T20 has 204 blocks; with 8 blocks used by USB we can use up to 196; when
       -- optimized for area (5x1k) this yields 196/4 = 49k samples. If the debugger
