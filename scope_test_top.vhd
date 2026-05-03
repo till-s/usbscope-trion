@@ -28,7 +28,7 @@ entity scope_test_top is
       --   on the fine-tuning of the sdram_smpl_clk phase...
       SDRAM_READ_DLY_G  : natural := 3;
       BOARD_VERSION_G   : std_logic_vector( 7 downto 0) := x"02";
-      USE_SDRAM_BUF_G   : boolean := true;
+      USE_SDRAM_BUF_G   : boolean := false;
       -- block-ram depth (# samples) if USE_SDRAM_BUF_G is false; ignored otherwise
       -- T20 has 204 blocks; with 8 blocks used by USB we can use up to 196; when
       -- optimized for area (5x1k) this yields 196/4 = 49k samples. If the debugger
@@ -313,7 +313,8 @@ architecture rtl of scope_test_top is
    signal pgaSClkLocOb         : std_logic_vector(pgaCSb'range);
 
    -- version 3.2 has no pull-downs on miso/mosi
-   signal hwVersion            : std_logic_vector(1 downto 0)   := (others => '1');
+   signal boardVersion         : std_logic_vector(7 downto 0)   := x"FF"; -- initially undefined
+   signal hwVersion            : unsigned(1 downto 0);
 
 begin
 
@@ -376,12 +377,15 @@ begin
 
    sdramBusRep.vld <= sdramBusRVldDly(0);
 
+   -- default is weak pull-ups; first version had no straps; map to 00 by inverting
+   hwVersion(1) <= not spiMISO;
+   hwVersion(0) <= not spiMOSI_IN;
+
    P_INI : process ( ulpiClk ) is
       variable cnt        : unsigned(29 downto 0)        := (others => '1');
       variable rst        : std_logic_vector(3 downto 0) := (others => '1');
       variable spiMosiOe  : std_logic                    := '0';
       attribute ASYNC_REG of rst : variable is "TRUE";
-
    begin
       if ( rising_edge( ulpiClk ) ) then
          if ( cnt( cnt'left ) = '1' ) then
@@ -390,8 +394,9 @@ begin
          -- when we come out of reset read the hardware rev. strapping
          -- and flip MOSI OE
          if ( (spiMosiOe or rst(0)) = '0' ) then
-            spiMosiOe := '1';
-            hwVersion <= not (spiMISO & spiMOSI_IN);
+            spiMosiOe    := '1';
+            -- add strapped value to BOARD_VERSION_G
+            boardVersion <= std_logic_vector(unsigned(BOARD_VERSION_G) +  resize(hwVersion, boardVersion'length));
          end if;
          rst := not ulpiPllLocked & rst(rst'left downto 1);
       end if;
@@ -440,7 +445,6 @@ begin
       RAM_BITS_G                   => ADC_BITS_G,
       MEM_DEPTH_G                  => MEM_DEPTH_C,
       GIT_VERSION_G                => GIT_VERSION_C,
-      BOARD_VERSION_G              => BOARD_VERSION_G,
       BB_DELAY_ARRAY_G             => BB_DELAY_ARRAY_C,
       SDRAM_ADDR_WIDTH_G           => FLAT_A_WIDTH_C,
       USE_SDRAM_BUF_G              => USE_SDRAM_BUF_G,
@@ -477,6 +481,8 @@ begin
       regVld                       => regVld,  --: out std_logic;
       regRdy                       => regRdy,  --: in  std_logic := '1';
       regErr                       => regErr,  --: in  std_logic := '1'
+
+      boardVersion                 => boardVersion,
 
       spiSClk                      => spiSClkCtl, --: out std_logic;
       spiMOSI                      => spiMOSICtl, --: out std_logic;
@@ -806,7 +812,7 @@ begin
 
    B_REGS : block is
    begin
-      P_COMB : process (regs, regVld, regRdnw, regAddr, regWDat, adcStatus, adcPllLocked, hwVersion) is
+      P_COMB : process (regs, regVld, regRdnw, regAddr, regWDat, adcStatus, adcPllLocked) is
          variable v : RegType;
       begin
          v              := regs;
@@ -842,7 +848,6 @@ begin
             regRDat    <= adcStatus;
          elsif  ( regAddr = 4 ) then
             regRDat(0)          <= adcPllLocked;
-            regRDat(5 downto 4) <= hwVersion;
          elsif  ( not USE_SDRAM_BUF_G and ( regAddr = 7 ) ) then
             regRDat <= std_logic_vector( regs.sel );
             if ( (regVld and not regRdnw) = '1' ) then
