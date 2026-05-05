@@ -4,7 +4,7 @@
 "deviceDesc" :
   # USE idProduct 0x0001 FOR TESTING ONLY, see https::/pid.codes
   "idProduct"         : 0x0001
-  "iProduct"          : "Till's USB Scope HW V2"
+  "iProduct"          : "Till's USB Scope HW V3"
   "configurationDesc" :
     "functionACM"       :
       "enabled"           : true
