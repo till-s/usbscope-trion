@@ -100,7 +100,7 @@
     </efx:design_info>
     <efx:constraint_info>
         <efx:sdc_file name="scope_test_v2.pt.sdc"/>
-        <efx:sdc_file name="scope_test.sdc"/>
+        <efx:sdc_file name="scope.sdc"/>
         <efx:inter_file name=""/>
     </efx:constraint_info>
     <efx:sim_info/>
