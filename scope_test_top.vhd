@@ -380,10 +380,6 @@ begin
 
    sdramBusRep.vld <= sdramBusRVldDly(0);
 
-   -- default is weak pull-ups; first version had no straps; map to 00 by inverting
-   boardVariant(1) <= not spiMISO;
-   boardVariant(0) <= not spiMOSI_IN;
-
    P_INI : process ( ulpiClk ) is
       variable cnt        : unsigned(29 downto 0)        := (others => '1');
       variable rst        : std_logic_vector(3 downto 0) := (others => '1');
@@ -398,10 +394,13 @@ begin
          -- and flip MOSI OE
          if ( (spiMosiOe or rst(0)) = '0' ) then
             spiMosiOe    := '1';
-            -- add strapped value to BOARD_VERSION_G
-            boardVersion <= std_logic_vector(unsigned(BOARD_VERSION_G) +  resize(boardVariant, boardVersion'length));
+            -- default is weak pull-ups; first version had no straps; map to 00 by inverting
+            boardVariant(1) <= not spiMISO;
+            boardVariant(0) <= not spiMOSI_IN;
          end if;
          rst := not ulpiPllLocked & rst(rst'left downto 1);
+         -- add strapped value to BOARD_VERSION_G
+         boardVersion <= std_logic_vector(unsigned(BOARD_VERSION_G) +  resize(boardVariant, boardVersion'length));
       end if;
       ulpiRst      <= rst(0);
       usb2Rst      <= rst(0);
