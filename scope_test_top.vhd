@@ -314,7 +314,10 @@ architecture rtl of scope_test_top is
 
    -- version 3.2 has no pull-downs on miso/mosi
    signal boardVersion         : std_logic_vector(7 downto 0)   := x"FF"; -- initially undefined
-   signal hwVersion            : unsigned(1 downto 0);
+   signal boardVariant         : unsigned(1 downto 0);                    -- offset added to BOARD_VERSION_G  
+   constant VARIANT_3_2_OFF_C  : unsigned(1 downto 0)           :=  "00";
+   signal invertCHB            : std_logic;
+   signal invertCHBAdcClk      : std_logic;
 
 begin
 
@@ -378,8 +381,8 @@ begin
    sdramBusRep.vld <= sdramBusRVldDly(0);
 
    -- default is weak pull-ups; first version had no straps; map to 00 by inverting
-   hwVersion(1) <= not spiMISO;
-   hwVersion(0) <= not spiMOSI_IN;
+   boardVariant(1) <= not spiMISO;
+   boardVariant(0) <= not spiMOSI_IN;
 
    P_INI : process ( ulpiClk ) is
       variable cnt        : unsigned(29 downto 0)        := (others => '1');
@@ -396,7 +399,7 @@ begin
          if ( (spiMosiOe or rst(0)) = '0' ) then
             spiMosiOe    := '1';
             -- add strapped value to BOARD_VERSION_G
-            boardVersion <= std_logic_vector(unsigned(BOARD_VERSION_G) +  resize(hwVersion, boardVersion'length));
+            boardVersion <= std_logic_vector(unsigned(BOARD_VERSION_G) +  resize(boardVariant, boardVersion'length));
          end if;
          rst := not ulpiPllLocked & rst(rst'left downto 1);
       end if;
@@ -759,7 +762,21 @@ begin
       end if;
    end process P_ADC_CLK_RST;
 
-   adcRst <= adcRstCnt( adcRstCnt'left );
+   adcRst               <= adcRstCnt( adcRstCnt'left );
+   -- 3.2 has odd number of polarity flips
+   invertCHB            <= ite( boardVariant = VARIANT_3_2_OFF_C );
+
+   U_SMPL_SIGN_SYNC : entity work.SynchronizerBit
+      generic map (
+         IN_REG_G       => true
+      )
+      port map (
+         clk            => adcClk,
+         rst            => '0',
+         datInp(0)      => invertCHB,
+         datOut(0)      => invertCHBAdcClk,
+         clkInp         => ulpiClk
+      );
 
    P_SMPL_SIGN : process ( adcClk ) is
    begin
@@ -769,7 +786,11 @@ begin
          -- sheet output pins. B has an odd number of inversions.
          adcDatAReg     <= adcDatA;
          -- bit 0 is DOR; preserve
-         adcDatBReg     <= std_logic_vector( - signed( adcDatB(adcDatB'left downto 1 ) ) ) & adcDatB(0);
+         if ( invertCHBAdcClk = '1' ) then
+            adcDatBReg     <= std_logic_vector( - signed( adcDatB(adcDatB'left downto 1 ) ) ) & adcDatB(0);
+         else
+            adcDatBReg     <= adcDatB;
+         end if;
          extTrgOutEnLst <= extTrgOutEn;
       end if;
    end process P_SMPL_SIGN;
