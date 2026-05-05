@@ -19,7 +19,7 @@ use     work.SDRAMUtilPkg.all;
 use     work.SDRAMBufPkg.all;
 use     work.GitVersionPkg.all;
 
-entity scope_test_top is
+entity scope_top is
    generic (
       USE_SMPL_CLK_G    : boolean := false;
       -- pipeline stages in the readback:
@@ -130,9 +130,9 @@ entity scope_test_top is
       auxClk            : in    std_logic;
       auxPllLocked      : in    std_logic
    );
-end entity scope_test_top;
+end entity scope_top;
 
-architecture rtl of scope_test_top is
+architecture rtl of scope_top is
    attribute ASYNC_REG         : string;
    attribute SYN_PRESERVE      : boolean;
 

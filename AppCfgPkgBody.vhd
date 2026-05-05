@@ -5,7 +5,7 @@
 
 -- THIS FILE WAS AUTOMATICALLY GENERATED; DO NOT EDIT!
 
--- Generated with: 'genAppCfgPkgBody.py -f . scope_test_v2.yaml':
+-- Generated with: 'genAppCfgPkgBody.py -f . scope_v3.yaml':
 --
 -- deviceDesc:
 --   configurationDesc:
@@ -14,7 +14,7 @@
 --       haveLineState: false
 --       haveSendBreak: false
 --       iFunction: USB Scope TTY
---   iProduct: Till's USB Scope HW V2
+--   iProduct: Till's USB Scope HW V3
 --   idProduct: 1
 --
 
@@ -313,7 +313,7 @@ package body Usb2AppCfgPkg is
       253 => x"00",
       254 => x"56",  -- V
       255 => x"00",
-      256 => x"32",  -- 2
+      256 => x"33",  -- 3
       257 => x"00",
       -- Usb2StringDesc
       258 => x"1c",  -- bLength
