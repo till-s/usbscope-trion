@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<efx:project name="scope_test_v2" description="" last_change="" sw_version="2025.1.110" last_run_state="pass" last_run_flow="bitstream" config_result_in_sync="true" design_ood="change" place_ood="sync" route_ood="sync" xmlns:efx="http://www.efinixinc.com/enf_proj" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.efinixinc.com/enf_proj enf_proj.xsd">
+<efx:project name="scope_test_v2" description="" last_change="" sw_version="2025.1.110" last_run_state="fail" last_run_flow="syn" config_result_in_sync="true" design_ood="" place_ood="change" route_ood="sync" xmlns:efx="http://www.efinixinc.com/enf_proj" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.efinixinc.com/enf_proj enf_proj.xsd">
     <efx:device_info>
         <efx:family name="Trion"/>
         <efx:device name="T20Q144"/>
         <efx:timing_model name="C4"/>
     </efx:device_info>
     <efx:design_info def_veri_version="verilog_2k" def_vhdl_version="vhdl_2008" unified_flow="false">
-        <efx:top_module name="scope_test_top"/>
-        <efx:design_file name="scope_test_top.vhd" version="default" library="default"/>
+        <efx:top_module name="scope_top"/>
+        <efx:design_file name="scope_top.vhd" version="default" library="default"/>
         <efx:design_file name="SDRAMUtilPkg.vhd" version="default" library="default"/>
         <efx:design_file name="modules/mecatica-usb/core/hdl/Usb2Bram.vhd" version="default" library="default"/>
         <efx:design_file name="modules/mecatica-usb/core/hdl/Usb2MboxSync.vhd" version="default" library="default"/>
