@@ -117,6 +117,7 @@ entity scope_top is
 
       adcClk            : in    std_logic;
       adcPllLocked      : in    std_logic;
+      adcPllRstb        : out   std_logic := '1';
       -- up to 10 data bits and the over-range bit in position 0
       ADC_DDR_HI        : in    std_logic_vector(10 downto 0);
       ADC_DDR_LO        : in    std_logic_vector(10 downto 0);
@@ -281,6 +282,7 @@ architecture rtl of scope_top is
       led         : std_logic_vector(led'range);
       scratch     : std_logic_vector(7 downto 1);
       isTriggered : std_logic;
+      adcPllRst   : std_logic;
       sel         : unsigned(7 downto 0);
    end record RegType;
 
@@ -288,6 +290,7 @@ architecture rtl of scope_top is
       led         => (others => '0'),
       scratch     => (others => '0'),
       isTriggered => '0',
+      adcPllRst   => '0',
       sel         => (others => '1')
    );
 
@@ -867,7 +870,11 @@ begin
          elsif  ( regAddr = 3 ) then
             regRDat    <= adcStatus;
          elsif  ( regAddr = 4 ) then
-            regRDat(0)          <= adcPllLocked;
+            regRDat(0) <= adcPllLocked;
+            regRDat(1) <= regs.adcPllRst;
+            if ( (regVld and not regRdnw) = '1' ) then
+               v.adcPllRst := regWDat(1);
+            end if;
          elsif  ( not USE_SDRAM_BUF_G and ( regAddr = 7 ) ) then
             regRDat <= std_logic_vector( regs.sel );
             if ( (regVld and not regRdnw) = '1' ) then
@@ -877,7 +884,9 @@ begin
             regErr <= '1';
          end if;
 
-         regsIn  <= v;
+         adcPllRstb <= not regs.adcPllRst;
+
+         regsIn     <= v;
       end process P_COMB;
 
       P_SEQ : process ( ulpiClk ) is
