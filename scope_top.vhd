@@ -76,6 +76,13 @@ entity scope_top is
       ulpiStp_OE        : out   std_logic                    := '0';
       ulpiPllLocked     : in    std_logic;
 
+      -- reconfiguration
+      cfg_CONFIG        : out   std_logic                    := '0';
+      cfg_ENA           : out   std_logic                    := '0';
+      cfg_CBSEL         : out   std_logic_vector(1 downto 0) := (others => '0');
+      cfg_CDONE         : in    std_logic;
+      cfg_ERROR         : in    std_logic;
+
       led               : out   std_logic_vector(12 downto 0) := (others => '0');
 
       i2cSDA_IN         : in    std_logic;
@@ -284,6 +291,7 @@ architecture rtl of scope_top is
       isTriggered : std_logic;
       adcPllRst   : std_logic;
       sel         : unsigned(7 downto 0);
+      reconfig    : std_logic;
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -291,7 +299,8 @@ architecture rtl of scope_top is
       scratch     => (others => '0'),
       isTriggered => '0',
       adcPllRst   => '0',
-      sel         => (others => '1')
+      sel         => (others => '1'),
+      reconfig    => '0'
    );
 
    signal regs                 : RegType   := REG_INIT_C;
@@ -875,6 +884,10 @@ begin
             if ( (regVld and not regRdnw) = '1' ) then
                v.adcPllRst := regWDat(1);
             end if;
+         elsif  ( regAddr = 5 ) then
+            if ( ( (regVld and not regRdnw) = '1' ) and (regWDat = x"5A") ) then
+               v.reconfig := '1';
+            end if;
          elsif  ( not USE_SDRAM_BUF_G and ( regAddr = 7 ) ) then
             regRDat <= std_logic_vector( regs.sel );
             if ( (regVld and not regRdnw) = '1' ) then
@@ -888,6 +901,9 @@ begin
 
          regsIn     <= v;
       end process P_COMB;
+
+      cfg_ENA    <= '1';
+      cfg_CONFIG <= regs.reconfig;
 
       P_SEQ : process ( ulpiClk ) is
       begin
