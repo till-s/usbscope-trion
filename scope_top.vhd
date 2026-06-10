@@ -18,6 +18,8 @@ use     work.SDRAMCtrlPkg.all;
 use     work.SDRAMUtilPkg.all;
 use     work.SDRAMBufPkg.all;
 use     work.GitVersionPkg.all;
+use     work.RegPkg.all;
+use     work.GenRegPkg.all;
 
 entity scope_top is
    generic (
@@ -277,13 +279,11 @@ architecture rtl of scope_top is
    signal adcRst               : std_logic;
    signal adcStatus            : std_logic_vector(7 downto 0);
 
-   signal regRDat              : std_logic_vector(7 downto 0) := (others => '0');
-   signal regWDat              : std_logic_vector(7 downto 0);
-   signal regAddr              : unsigned(7 downto 0);
-   signal regRdnw              : std_logic;
-   signal regVld               : std_logic;
-   signal regRdy               : std_logic := '1';
-   signal regErr               : std_logic := '1';
+   signal regReq               : RegisterReqType;
+   signal regRep               : RegisterRepType;
+
+   signal genRegReq            : GenRegOutType;
+   signal genRegRep            : GenRegInpType;
 
    type RegType is record
       led         : std_logic_vector(led'range);
@@ -291,6 +291,7 @@ architecture rtl of scope_top is
       isTriggered : std_logic;
       adcPllRst   : std_logic;
       sel         : unsigned(7 downto 0);
+      regRep      : RegisterRepType;
       reconfig    : std_logic;
    end record RegType;
 
@@ -300,6 +301,7 @@ architecture rtl of scope_top is
       isTriggered => '0',
       adcPllRst   => '0',
       sel         => (others => '1'),
+      regRep      => REGISTER_REP_INIT_C,
       reconfig    => '0'
    );
 
@@ -326,7 +328,7 @@ architecture rtl of scope_top is
 
    -- version 3.2 has no pull-downs on miso/mosi
    signal boardVersion         : std_logic_vector(7 downto 0)   := x"FF"; -- initially undefined
-   signal boardVariant         : unsigned(1 downto 0);                    -- offset added to BOARD_VERSION_G  
+   signal boardVariant         : unsigned(1 downto 0);                    -- offset added to BOARD_VERSION_G
    constant VARIANT_3_2_OFF_C  : unsigned(1 downto 0)           :=  "00";
    signal invertCHB            : std_logic;
    signal invertCHBAdcClk      : std_logic;
@@ -486,15 +488,13 @@ begin
       adcStatus                    => adcStatus, --: out std_logic_vector(7 downto 0) := (others => '0');
       err                          => open,
 
-      -- register interface
-      regClk                       => ulpiClk,
-      regRDat                      => regRDat, --: in  std_logic_vector(7 downto 0) := (others => '0');
-      regWDat                      => regWDat, --: out std_logic_vector(7 downto 0);
-      regAddr                      => regAddr, --: out unsigned(7 downto 0);
-      regRdnw                      => regRdnw, --: out std_logic;
-      regVld                       => regVld,  --: out std_logic;
-      regRdy                       => regRdy,  --: in  std_logic := '1';
-      regErr                       => regErr,  --: in  std_logic := '1'
+      -- register interfaces
+      genRegOb                     => genRegReq,
+      genRegIb                     => genRegRep,
+
+      appRegClk                    => ulpiClk,
+      appRegOb                     => regReq,
+      appRegIb                     => regRep,
 
       boardVersion                 => boardVersion,
 
@@ -844,66 +844,54 @@ begin
 
    B_REGS : block is
    begin
-      P_COMB : process (regs, regVld, regRdnw, regAddr, regWDat, adcStatus, adcPllLocked) is
+      P_COMB : process (regs, regReq, adcStatus, adcPllLocked) is
          variable v : RegType;
       begin
          v              := regs;
-         regRdy         <= '1';
-         regErr         <= '0';
-         regRDat        <= (others => '0');
+         registerPrepareRegistered(regReq, v.regRep);
          isTriggeredLoc <= regs.isTriggered;
-         if     ( regAddr = 0 ) then
-            -- front LEDs
-            regRDat <= '0' & regs.led(5 downto 3) & '0' & regs.led(8 downto 6);
-            if ( (regVld and not regRdnw) = '1' ) then
-               v.led(5 downto 3) := regWDat(6 downto 4);
-               v.led(8 downto 6) := regWDat(2 downto 0);
+
+         -- front LEDs
+         registerRWBitsAt( 0, regReq, v.regRep, v.led( 8 downto  6), 0 );
+         registerRWBitsAt( 0, regReq, v.regRep, v.led( 5 downto  3), 4 );
+
+         -- rear  LEDs
+         registerRWBitsAt( 1, regReq, v.regRep, v.led( 2 downto  0), 0 );
+         registerRWBitsAt( 1, regReq, v.regRep, v.led(12 downto  9), 4 );
+
+         -- trigger and scratch bits
+         registerRWBitsAt( 2, regReq, v.regRep, v.isTriggered      , 0 );
+         registerRWBitsAt( 2, regReq, v.regRep, v.scratch          , 1 );
+         if ( registerOnWrite( 2, regReq, v.regRep ) ) then
+            -- writing a one when bit is already active causes a flicker
+            if ( ( v.isTriggered and regs.isTriggered ) = '1' ) then
+               isTriggeredLoc <= '0';
             end if;
-         elsif  ( regAddr = 1 ) then
-            -- rear  LEDs
-            regRDat <= regs.led(12 downto 9) & '0' & regs.led(2 downto 0);
-            if ( (regVld and not regRdnw) = '1' ) then
-               v.led(12 downto 9) := regWDat(7 downto 4);
-               v.led( 2 downto 0) := regWDat(2 downto 0);
-            end if;
-         elsif  ( regAddr = 2 ) then
-            regRDat <= regs.scratch & regs.isTriggered;
-            if ( (regVld and not regRdnw) = '1' ) then
-               v.isTriggered      := regWDat(0);
-               v.scratch          := regWDat(7 downto 1);
-               -- writing a one when bit is already active causes a flicker
-               if ( ( v.isTriggered and regs.isTriggered ) = '1' ) then
-                  isTriggeredLoc <= '0';
-               end if;
-            end if;
-         elsif  ( regAddr = 3 ) then
-            regRDat    <= adcStatus;
-         elsif  ( regAddr = 4 ) then
-            regRDat(0) <= adcPllLocked;
-            regRDat(1) <= regs.adcPllRst;
-            if ( (regVld and not regRdnw) = '1' ) then
-               v.adcPllRst := regWDat(1);
-            end if;
-         elsif  ( regAddr = 5 ) then
-            if ( ( (regVld and not regRdnw) = '1' ) and (regWDat = x"5A") ) then
-               v.reconfig := '1';
-            end if;
-         elsif  ( not USE_SDRAM_BUF_G and ( regAddr = 7 ) ) then
-            regRDat <= std_logic_vector( regs.sel );
-            if ( (regVld and not regRdnw) = '1' ) then
-               v.sel := unsigned( regWDat );
-            end if;
-         else
-            regErr <= '1';
          end if;
+
+         -- ADC status
+         registerROBitsAt( 3, regReq, v.regRep, adcStatus );
+
+         -- ADC PLL locked status and reset
+         registerROBitsAt( 4, regReq, v.regRep, adcPllLocked, 0 );
+         registerRWBitsAt( 4, regReq, v.regRep, v.adcPllRst , 1 );
+
+         if  ( not USE_SDRAM_BUF_G ) then
+            registerRWBitsAt( 7, regReq, v.regRep, std_logic_vector( v.sel ) );
+         else
+            registerROBitsAt( 7, regReq, v.regRep, x"00" );
+         end if;
+
+         registerXactRegistered(regReq, v.regRep);
 
          adcPllRstb <= not regs.adcPllRst;
 
+         regRep     <= regs.regRep;
          regsIn     <= v;
       end process P_COMB;
 
-      cfg_ENA    <= '1';
-      cfg_CONFIG <= regs.reconfig;
+      cfg_ENA    <= genRegRep.reconfigurable;
+      cfg_CONFIG <= genRegReq.reconfigure;
 
       P_SEQ : process ( ulpiClk ) is
       begin
@@ -944,9 +932,11 @@ begin
          isTriggeredB,
          isTriggeredE,
          gpioIsOutput,
-         regs
+         regs,
+         genRegReq
       ) is
          variable v : std_logic_vector(led'range);
+         variable g : std_logic_vector(led'range);
       begin
          v     := (others => '0');
          v( 0) := '0';                          -- front-right, Red
@@ -967,10 +957,23 @@ begin
 
          v(12) := '0';                          -- front-left, single
 
+         g     := (others => '0');
+         g( 0) := genRegReq.leds(0);
+         g( 9) := genRegReq.leds(1);
+         g(11) := genRegReq.leds(2);
+
          -- leds are active-low on board version 3.2
-         led   <= not (v or regs.led);
+         led   <= not (v or regs.led or g);
       end process P_MAP_LED;
 
    end block B_LEDS;
+
+   P_GEN_REG : process ( genRegReq ) is
+   begin
+      genRegRep <= GEN_REG_INP_INIT_C;
+      genRegRep.ledsSupported  <= x"07";
+      genRegRep.ledsInitial    <= x"00";
+      genRegRep.reconfigurable <= '1';
+   end process P_GEN_REG;
 
 end architecture rtl;
