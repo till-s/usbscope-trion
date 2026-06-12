@@ -5,13 +5,13 @@
 
 -- THIS FILE WAS AUTOMATICALLY GENERATED; DO NOT EDIT!
 
--- Generated with: 'genAppCfgPkgBody.py -f . scope_v3.yaml':
+-- Generated with: 'genAppCfgPkgBody.py -f AppCfgPkgBody.vhd scope_v3.yaml':
 --
 -- deviceDesc:
 --   configurationDesc:
 --     functionACM:
 --       enabled: true
---       haveLineState: false
+--       haveLineState: true
 --       haveSendBreak: false
 --       iFunction: USB Scope TTY
 --   iProduct: Till's USB Scope HW V3
@@ -103,7 +103,7 @@ package body Usb2AppCfgPkg is
        64 => x"04",  -- bLength
        65 => x"24",  -- bDescriptorType
        66 => x"02",  -- bDescriptorSubtype
-       67 => x"00",  -- bmCapabilities
+       67 => x"02",  -- bmCapabilities
       -- Usb2CDCFuncUnionDesc
        68 => x"05",  -- bLength
        69 => x"24",  -- bDescriptorType
@@ -117,7 +117,7 @@ package body Usb2AppCfgPkg is
        76 => x"03",  -- bmAttributes
        77 => x"08",  -- wMaxPacketSize
        78 => x"00",
-       79 => x"ff",  -- bInterval
+       79 => x"10",  -- bInterval
       -- Usb2InterfaceDesc
        80 => x"09",  -- bLength
        81 => x"04",  -- bDescriptorType
@@ -222,7 +222,7 @@ package body Usb2AppCfgPkg is
       169 => x"04",  -- bLength
       170 => x"24",  -- bDescriptorType
       171 => x"02",  -- bDescriptorSubtype
-      172 => x"00",  -- bmCapabilities
+      172 => x"02",  -- bmCapabilities
       -- Usb2CDCFuncUnionDesc
       173 => x"05",  -- bLength
       174 => x"24",  -- bDescriptorType
@@ -236,7 +236,7 @@ package body Usb2AppCfgPkg is
       181 => x"03",  -- bmAttributes
       182 => x"08",  -- wMaxPacketSize
       183 => x"00",
-      184 => x"10",  -- bInterval
+      184 => x"08",  -- bInterval
       -- Usb2InterfaceDesc
       185 => x"09",  -- bLength
       186 => x"04",  -- bDescriptorType

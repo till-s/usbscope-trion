@@ -891,7 +891,7 @@ begin
       end process P_COMB;
 
       cfg_ENA    <= genRegRep.reconfigurable;
-      cfg_CONFIG <= genRegReq.reconfigure;
+      cfg_CONFIG <= (genRegReq.reconfigure and not acmDTR);
 
       P_SEQ : process ( ulpiClk ) is
       begin
@@ -951,7 +951,7 @@ begin
          v( 7) := isTriggeredB;                 -- CHB,         Green
          v( 8) := '0';                          -- CHB,         Blue
 
-         v( 9) := '0';                          -- front-left,  Red
+         v( 9) := genRegReq.reconfigure;        -- front-left,  Red
          v(10) := ulpiPllLocked and adcPllLocked; -- front-left,  Green
          v(11) := '0';                          -- front-left,  Blue
 

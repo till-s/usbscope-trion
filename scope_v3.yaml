@@ -16,4 +16,4 @@
       # Makes signals such as DTR, speed etc. available to
       # user logic. Also enables notifications such as ring-
       # or break-detect.
-      "haveLineState"     : false
+      "haveLineState"     : true
