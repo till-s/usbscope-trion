@@ -5,9 +5,10 @@
 
 -- THIS FILE WAS AUTOMATICALLY GENERATED; DO NOT EDIT!
 
--- Generated with: 'genAppCfgPkgBody.py -f AppCfgPkgBody.vhd scope_v3.yaml':
+-- Generated with: 'genAppCfgPkgBody.py -f AppCfgPkgBody.vhd -F scope_v3.yaml':
 --
 -- deviceDesc:
+--   bcdDevice: 4660
 --   configurationDesc:
 --     functionACM:
 --       enabled: true
@@ -41,8 +42,8 @@ package body Usb2AppCfgPkg is
         9 => x"12",
        10 => x"01",  -- idProduct
        11 => x"00",
-       12 => x"00",  -- bcdDevice
-       13 => x"01",
+       12 => x"34",  -- bcdDevice
+       13 => x"12",
        14 => x"00",  -- iManufacturer
        15 => x"01",  -- iProduct
        16 => x"00",  -- iSerialNumber
@@ -160,8 +161,8 @@ package body Usb2AppCfgPkg is
       114 => x"12",
       115 => x"01",  -- idProduct
       116 => x"00",
-      117 => x"00",  -- bcdDevice
-      118 => x"01",
+      117 => x"34",  -- bcdDevice
+      118 => x"12",
       119 => x"00",  -- iManufacturer
       120 => x"01",  -- iProduct
       121 => x"00",  -- iSerialNumber

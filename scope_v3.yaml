@@ -5,6 +5,9 @@
   # USE idProduct 0x0001 FOR TESTING ONLY, see https::/pid.codes
   "idProduct"         : 0x0001
   "iProduct"          : "Till's USB Scope HW V3"
+  # lowest digit encodes firmware API version; dont modify
+  # this unless you know what you are doing
+  "bcdDevice"         : 0x0004
   "configurationDesc" :
     "functionACM"       :
       "enabled"           : true
