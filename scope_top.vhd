@@ -42,7 +42,6 @@ entity scope_top is
       RAM_FREQ_G        : real    := 166.0E6;
       RAM_DEVICE_G      : SDRAMDevParamsType := INSIGNIS_NDS36PT5_16ET_C;
       NO_DECIMATORS_G   : boolean := false;
-      HAVE_SPI_CMD_G    : boolean := true;
       ADC_BITS_G        : natural := 10;
       USE_STRM_BUF_G    : boolean := true
    );
@@ -451,7 +450,7 @@ begin
    acmFifoInpWen <= fifoWVld;
    fifoWRdy      <= not acmFifoInpFull;
 
-   U_CMD : entity work.CommandWrapper
+   U_CMD : entity work.ScopeCommandWrapper
    generic map (
       I2C_SCL_G                    => BB_I2C_SCL_C,
       BBO_INIT_G                   => BB_INIT_C,
@@ -464,7 +463,6 @@ begin
       BB_DELAY_ARRAY_G             => BB_DELAY_ARRAY_C,
       SDRAM_ADDR_WIDTH_G           => FLAT_A_WIDTH_C,
       USE_SDRAM_BUF_G              => USE_SDRAM_BUF_G,
-      HAVE_SPI_CMD_G               => HAVE_SPI_CMD_G,
       HAVE_REG_CMD_G               => true,
       HAVE_BB_CMD_G                => true,
       DISABLE_DECIMATORS_G         => NO_DECIMATORS_G,
