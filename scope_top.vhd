@@ -145,28 +145,6 @@ architecture rtl of scope_top is
    attribute ASYNC_REG         : string;
    attribute SYN_PRESERVE      : boolean;
 
-   component CosGen is
-      port (
-         clk      : in  std_logic;
-         load     : in  std_logic;
-         coeff    : in  signed(17 downto 0);
-         aini     : in  signed(34 downto 0);
-         phasCos  : in  boolean;
-         cos      : out signed(34 downto 0)
-      );
-   end component CosGen;
-
-
-   function toSlv(constant a : in Slv8Array)
-   return std_logic_vector is
-      variable v : std_logic_vector(8*a'length - 1 downto 0);
-   begin
-      for i in a'low to a'high loop
-         v(8*(i - a'low) + 7 downto 8*(i - a'low)) := a(i);
-      end loop;
-      return v;
-   end function toSlv;
-
    function SDRAM_NSMPL_MAX_F(constant x : natural; constant align : natural) return natural is
       variable v : natural;
    begin
