@@ -279,7 +279,7 @@ architecture rtl of scope_top is
       isTriggered => '0',
       adcPllRst   => '0',
       sel         => (others => '1'),
-      regRep      => REGISTER_REP_INIT_C,
+      regRep      => REGISTER_REP_INIT_C
    );
 
    signal regs                 : RegType   := REG_INIT_C;
