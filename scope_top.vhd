@@ -223,6 +223,8 @@ architecture rtl of scope_top is
 
    signal usb2Rst              : std_logic    := '0';
    signal usb2DevStatus        : Usb2DevStatusType := USB2_DEV_STATUS_INIT_C;
+   signal usb2DisconnectReq    : std_logic    := '0';
+   signal usb2DisconnectAck    : std_logic    := '0';
 
    signal sdramBusReq          : SDRAMReqType := SDRAM_REQ_INIT_C;
    signal sdramBusRep          : SDRAMRepType := SDRAM_REP_INIT_C;
@@ -269,7 +271,6 @@ architecture rtl of scope_top is
       adcPllRst   : std_logic;
       sel         : unsigned(7 downto 0);
       regRep      : RegisterRepType;
-      reconfig    : std_logic;
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -279,7 +280,6 @@ architecture rtl of scope_top is
       adcPllRst   => '0',
       sel         => (others => '1'),
       regRep      => REGISTER_REP_INIT_C,
-      reconfig    => '0'
    );
 
    signal regs                 : RegType   := REG_INIT_C;
@@ -523,6 +523,8 @@ begin
          usb2HiSpeedEn             => usb2HiSpeedEn,
 
          usb2DevStatus             => usb2DevStatus,
+         usb2DisconnectReq         => usb2DisconnectReq,
+         usb2DisconnectAck         => usb2DisconnectAck,
 
          acmFifoClk                => ulpiClk,
          acmFifoOutDat             => acmFifoOutDat,
@@ -866,8 +868,11 @@ begin
          regsIn     <= v;
       end process P_COMB;
 
-      cfg_ENA    <= genRegRep.reconfigurable;
-      cfg_CONFIG <= (genRegReq.reconfigure and not acmDTR);
+      cfg_ENA           <= genRegRep.reconfigurable;
+      -- reconfiguration request initiates USB disconnect as soon as DTR drops
+      usb2DisconnectReq <= (genRegReq.reconfigure and not acmDTR);
+      -- once USB disconnect is complete we reconfigure
+      cfg_CONFIG        <= usb2DisconnectAck;
 
       P_SEQ : process ( ulpiClk ) is
       begin
@@ -909,7 +914,8 @@ begin
          isTriggeredE,
          gpioIsOutput,
          regs,
-         genRegReq
+         genRegReq,
+         usb2DisconnectAck
       ) is
          variable v : std_logic_vector(led'range);
          variable g : std_logic_vector(led'range);
