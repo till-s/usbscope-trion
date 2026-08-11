@@ -1,12 +1,16 @@
 [submodule "modules/mecatica-usb"]
 	path = modules/mecatica-usb
 	url = ../mecatica-usb
+    branch = main
 [submodule "modules/usbadc-support"]
 	path = modules/usbadc-support
 	url = ../usbadc-support
+    branch = main
 [submodule "modules/SDRAMCtrl"]
 	path = modules/SDRAMCtrl
 	url = ../SDRAM-controller.git
+    branch = main
 [submodule "modules/efx-scripts"]
 	path = modules/efx-scripts
 	url = ../efx-scripts
+    branch = main
