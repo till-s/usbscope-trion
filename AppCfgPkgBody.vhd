@@ -5,10 +5,10 @@
 
 -- THIS FILE WAS AUTOMATICALLY GENERATED; DO NOT EDIT!
 
--- Generated with: 'genAppCfgPkgBody.py -f AppCfgPkgBody.vhd -F scope_v3.yaml':
+-- Generated with: 'genAppCfgPkgBody.py -F -f AppCfgPkgBody.vhd scope_v3.yaml':
 --
 -- deviceDesc:
---   bcdDevice: 4660
+--   bcdDevice: 4
 --   configurationDesc:
 --     functionACM:
 --       enabled: true
@@ -16,7 +16,7 @@
 --       haveSendBreak: false
 --       iFunction: USB Scope TTY
 --   iProduct: Till's USB Scope HW V3
---   idProduct: 1
+--   idProduct: 9032
 --
 
 library ieee;
@@ -40,10 +40,10 @@ package body Usb2AppCfgPkg is
         7 => x"40",  -- bMaxPacketSize0
         8 => x"09",  -- idVendor
         9 => x"12",
-       10 => x"01",  -- idProduct
-       11 => x"00",
-       12 => x"34",  -- bcdDevice
-       13 => x"12",
+       10 => x"48",  -- idProduct
+       11 => x"23",
+       12 => x"04",  -- bcdDevice
+       13 => x"00",
        14 => x"00",  -- iManufacturer
        15 => x"01",  -- iProduct
        16 => x"00",  -- iSerialNumber
@@ -159,10 +159,10 @@ package body Usb2AppCfgPkg is
       112 => x"40",  -- bMaxPacketSize0
       113 => x"09",  -- idVendor
       114 => x"12",
-      115 => x"01",  -- idProduct
-      116 => x"00",
-      117 => x"34",  -- bcdDevice
-      118 => x"12",
+      115 => x"48",  -- idProduct
+      116 => x"23",
+      117 => x"04",  -- bcdDevice
+      118 => x"00",
       119 => x"00",  -- iManufacturer
       120 => x"01",  -- iProduct
       121 => x"00",  -- iSerialNumber

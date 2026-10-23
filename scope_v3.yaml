@@ -2,8 +2,8 @@
 # 
 # All supported settings are documented in schema.json
 "deviceDesc" :
-  # USE idProduct 0x0001 FOR TESTING ONLY, see https::/pid.codes
-  "idProduct"         : 0x0001
+  # see https::/pid.codes
+  "idProduct"         : 0x2348
   "iProduct"          : "Till's USB Scope HW V3"
   # lowest digit encodes firmware API version; dont modify
   # this unless you know what you are doing
